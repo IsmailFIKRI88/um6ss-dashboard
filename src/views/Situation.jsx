@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { COLORS, FACULTY_COLORS, FACULTY_LABELS } from '../../config/theme';
-import { QUALIFIED_SCORE_MIN, DEFAULT_ALERT_THRESHOLDS, DEFAULT_CAMPAIGN_TIMELINE } from '../../config/defaults';
-import { KPICard, AlertBadge, SectionTitle, ProgressBar, CampaignProgressBar } from '../../components/ui';
-import { CustomTooltip, FunnelBar } from '../../components/charts';
-import { buildFunnel, funnelConversionRates } from '../../processing/funnel';
-import { computeFinancials } from '../../processing/financial';
-import { computeProjection } from '../../processing/projection';
-import { fmt } from '../../utils/formatters';
-import { daysAgo, groupByDate } from '../../utils/dateHelpers';
+import { COLORS, FACULTY_COLORS, FACULTY_LABELS } from '../config/theme';
+import { QUALIFIED_SCORE_MIN, DEFAULT_ALERT_THRESHOLDS, DEFAULT_CAMPAIGN_TIMELINE } from '../config/defaults';
+import { KPICard, AlertBadge, SectionTitle, ProgressBar, CampaignProgressBar } from '../components/ui';
+import { CustomTooltip, FunnelBar } from '../components/charts';
+import { buildFunnel, funnelConversionRates } from '../processing/funnel';
+import { computeFinancials } from '../processing/financial';
+import { computeProjection } from '../processing/projection';
+import { fmt } from '../utils/formatters';
+import { daysAgo, groupByDate } from '../utils/dateHelpers';
 
 export default function ViewSituation({ leads, visits, adSpend, outcomes, experiments, dateRange }) {
   const [mode, setMode] = useState('pilotage'); // pilotage | direction

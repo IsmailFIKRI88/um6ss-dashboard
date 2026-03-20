@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter, Cell, ZAxis } from 'recharts';
-import { COLORS } from '../../config/theme';
-import { QUALIFIED_SCORE_MIN } from '../../config/defaults';
-import { KPICard, SectionTitle, AlertBadge } from '../../components/ui';
-import { CustomTooltip } from '../../components/charts';
-import { computeEngagement } from '../../processing/engagement';
-import { computeFormDiagnostics } from '../../processing/formDiagnostics';
+import { COLORS } from '../config/theme';
+import { QUALIFIED_SCORE_MIN } from '../config/defaults';
+import { KPICard, SectionTitle, AlertBadge } from '../components/ui';
+import { CustomTooltip } from '../components/charts';
+import { computeEngagement } from '../processing/engagement';
+import { computeFormDiagnostics } from '../processing/formDiagnostics';
 
 export default function ViewQualite({ leads, abandons, outcomes, dateRange }) {
   const [showWaterfall, setShowWaterfall] = useState(false);

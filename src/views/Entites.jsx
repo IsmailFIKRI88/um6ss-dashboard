@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { COLORS, FACULTY_LABELS, FACULTY_COLORS } from '../../config/theme';
-import { QUALIFIED_SCORE_MIN } from '../../config/defaults';
-import { SectionTitle, DataTable, KPICard } from '../../components/ui';
-import { fmt } from '../../utils/formatters';
+import { COLORS, FACULTY_LABELS, FACULTY_COLORS } from '../config/theme';
+import { QUALIFIED_SCORE_MIN } from '../config/defaults';
+import { SectionTitle, DataTable, KPICard } from '../components/ui';
+import { fmt } from '../utils/formatters';
 
 export default function ViewEntites({ leads, adSpend, experiments, dateRange }) {
   const [selectedEntity, setSelectedEntity] = useState(null);

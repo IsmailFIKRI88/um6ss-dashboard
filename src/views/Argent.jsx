@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
-import { COLORS, CHANNEL_COLORS, CHANNEL_LABELS } from '../../config/theme';
-import { SectionTitle, DataTable, KPICard, AlertBadge } from '../../components/ui';
-import { CustomTooltip } from '../../components/charts';
-import { reconciliate } from '../../processing/reconciliation';
-import { computeBudgetPacing } from '../../processing/budgetPacing';
-import { reattribute } from '../../processing/attribution';
-import { fmt, getChannelColor } from '../../utils/formatters';
+import { COLORS, CHANNEL_COLORS, CHANNEL_LABELS } from '../config/theme';
+import { SectionTitle, DataTable, KPICard, AlertBadge } from '../components/ui';
+import { CustomTooltip } from '../components/charts';
+import { reconciliate } from '../processing/reconciliation';
+import { computeBudgetPacing } from '../processing/budgetPacing';
+import { reattribute } from '../processing/attribution';
+import { fmt, getChannelColor } from '../utils/formatters';
 
 export default function ViewArgent({ leads, adSpend, adBreakdowns, dateRange }) {
   const [attributionModel, setAttributionModel] = useState('last-touch');
