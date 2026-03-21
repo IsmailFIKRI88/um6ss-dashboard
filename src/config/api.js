@@ -21,3 +21,12 @@ export const ADS_ENDPOINTS = {
   adVideo: '/ad-video',
   adSchema: '/ad-schema',
 };
+
+// Platform ad accounts — keys stored in sessionStorage, sent to WP plugin
+// which proxies the platform APIs.
+export const AD_PLATFORMS = [
+  { id: 'meta', label: 'Meta Ads', icon: '📘', color: '#1877F2', placeholder: 'Access Token ou App Secret' },
+  { id: 'google', label: 'Google Ads', icon: '🔍', color: '#4285F4', placeholder: 'API Key / OAuth Token' },
+  { id: 'linkedin', label: 'LinkedIn Ads', icon: '💼', color: '#0A66C2', placeholder: 'Access Token' },
+  { id: 'tiktok', label: 'TikTok Ads', icon: '🎵', color: '#010101', placeholder: 'Access Token' },
+];

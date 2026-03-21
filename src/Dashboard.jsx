@@ -1,32 +1,36 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { COLORS } from './config/theme';
+import { FACULTY_LABELS } from './config/theme';
 import { DEFAULT_API_URL } from './config/api';
 import { DATE_PRESETS } from './config/defaults';
+import { buildDefaultProgramFinancials } from './config/programs';
+import { ThemeProvider, DesignModePicker, useTheme } from './config/ThemeContext';
 import { useWordPressData } from './data/useWordPressData';
 import { useAdSpendData } from './data/useAdSpendData';
 import { computeDataQuality } from './processing/dataQuality';
 import { Header, Navigation, SettingsPanel, Footer } from './components/layout';
+import FinancialSettingsPanel from './components/FinancialSettingsPanel';
 import { LoadingOverlay, ErrorBanner, EmptyState } from './components/ui';
 import { daysAgo, filterByDateRange } from './utils/dateHelpers';
 
-import ViewSituation from './views/Situation';
-import ViewArgent from './views/Argent';
-import ViewQualite from './views/Qualite';
-import ViewEntites from './views/Entites';
+import ViewStrategie from './views/Strategie';
+import ViewAcquisition from './views/Acquisition';
+import ViewQualiteLeads from './views/QualiteLeads';
+import ViewBudget from './views/Budget';
 
 // ═══════════════════════════════════════════════
 // MAIN DASHBOARD
 // ═══════════════════════════════════════════════
 
 const ALL_VIEWS = [
-  { id: 'situation', label: 'Situation', icon: '⚡', requiresAds: false },
-  { id: 'argent', label: 'Argent', icon: '💰', requiresAds: true },
-  { id: 'qualite', label: 'Qualité', icon: '⭐', requiresAds: false },
-  { id: 'entites', label: 'Entités', icon: '🏥', requiresAds: false },
+  { id: 'strategie', label: 'Stratégie', icon: '⚡' },
+  { id: 'acquisition', label: 'Acquisition', icon: '📈' },
+  { id: 'qualite-leads', label: 'Qualité Leads', icon: '⭐' },
+  { id: 'budget', label: 'Budget', icon: '💰' },
 ];
 
-export default function Dashboard() {
-  const [activeView, setActiveView] = useState('situation');
+function DashboardInner() {
+  const { mode, activeEntity, colors } = useTheme();
+  const [activeView, setActiveView] = useState('strategie');
   const [datePreset, setDatePreset] = useState('30d');
 
   const [config, setConfig] = useState(() => {
@@ -35,6 +39,22 @@ export default function Dashboard() {
       return { wpBaseUrl: saved.wpBaseUrl || DEFAULT_API_URL, wpApiKey: saved.wpApiKey || '' };
     } catch { return { wpBaseUrl: DEFAULT_API_URL, wpApiKey: '' }; }
   });
+
+  // ── Financial settings per faculty (persisted in localStorage) ──
+  const [financialSettings, setFinancialSettings] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('um6ss_faculty_financials') || 'null');
+      return saved || buildDefaultProgramFinancials();
+    } catch { return buildDefaultProgramFinancials(); }
+  });
+
+  const updateFinancialSettings = useCallback((updater) => {
+    setFinancialSettings(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      try { localStorage.setItem('um6ss_faculty_financials', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
 
   const updateConfig = useCallback((updater) => {
     setConfig(prev => {
@@ -59,25 +79,28 @@ export default function Dashboard() {
   }, [datePreset]);
 
   const filteredLeads = useMemo(() => {
-    if (!dateRange.start) return wp.leads;
-    return filterByDateRange(wp.leads, 'created_at', dateRange.start, dateRange.end);
-  }, [wp.leads, dateRange]);
+    let leads = wp.leads;
+    if (dateRange.start) leads = filterByDateRange(leads, 'created_at', dateRange.start, dateRange.end);
+    if (activeEntity) {
+      leads = leads.filter(l => {
+        const entity = l.lp_entite || l.entity_code || '';
+        const label = FACULTY_LABELS[activeEntity] || '';
+        return entity.includes(activeEntity) || entity.toLowerCase().includes(label.toLowerCase());
+      });
+    }
+    return leads;
+  }, [wp.leads, dateRange, activeEntity]);
 
   const filteredAdSpend = useMemo(() => {
     if (!dateRange.start) return ads.spend;
     return filterByDateRange(ads.spend, 'date', dateRange.start, dateRange.end);
   }, [ads.spend, dateRange]);
 
-  // Data quality: 3 levels (ok / warning / error)
   const dataQuality = useMemo(() => computeDataQuality(filteredLeads), [filteredLeads]);
 
-  // Argent view only visible when ads data exists
-  const visibleViews = useMemo(() =>
-    ALL_VIEWS.filter(v => !v.requiresAds || ads.available)
-  , [ads.available]);
+  const visibleViews = ALL_VIEWS;
 
-  // Fallback if active view is hidden
-  const safeActiveView = visibleViews.find(v => v.id === activeView) ? activeView : 'situation';
+  const safeActiveView = visibleViews.find(v => v.id === activeView) ? activeView : 'strategie';
 
   const renderView = () => {
     if (wp.loading && !wp.leads.length) return <LoadingOverlay message="Chargement depuis WordPress..." />;
@@ -89,27 +112,37 @@ export default function Dashboard() {
       leads: filteredLeads, visits: wp.visits, abandons: wp.abandons,
       outcomes: wp.outcomes, experiments: wp.experiments,
       adSpend: filteredAdSpend, adBreakdowns: ads.breakdowns,
-      adVideo: ads.video, dateRange,
+      adVideo: ads.video, dateRange, financialSettings,
     };
 
     switch (safeActiveView) {
-      case 'situation': return <ViewSituation {...viewProps} />;
-      case 'argent': return <ViewArgent {...viewProps} />;
-      case 'qualite': return <ViewQualite {...viewProps} />;
-      case 'entites': return <ViewEntites {...viewProps} />;
-      default: return <ViewSituation {...viewProps} />;
+      case 'strategie': return <ViewStrategie {...viewProps} />;
+      case 'acquisition': return <ViewAcquisition {...viewProps} />;
+      case 'qualite-leads': return <ViewQualiteLeads {...viewProps} />;
+      case 'budget': return <ViewBudget {...viewProps} />;
+      default: return <ViewStrategie {...viewProps} />;
     }
   };
 
   return (
-    <div style={{ fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif", background: COLORS.light, minHeight: '100vh' }}>
+    <div style={{ fontFamily: mode.font, background: mode.bg, minHeight: '100vh', color: colors.dark }}>
       <Header leadsCount={wp.leads.length} adsAvailable={ads.available} dataQualityLevel={dataQuality.level} lastRefresh={wp.lastRefresh || ads.lastRefresh} />
       <Navigation views={visibleViews} activeView={safeActiveView} setActiveView={setActiveView} datePreset={datePreset} setDatePreset={setDatePreset} />
       <div style={{ padding: 24, maxWidth: 1280, margin: '0 auto' }}>
         <SettingsPanel config={config} setConfig={updateConfig} onRefresh={refresh} lastRefresh={wp.lastRefresh} />
+        <FinancialSettingsPanel settings={financialSettings} setSettings={updateFinancialSettings} />
         {renderView()}
       </div>
       <Footer />
+      <DesignModePicker />
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <ThemeProvider>
+      <DashboardInner />
+    </ThemeProvider>
   );
 }

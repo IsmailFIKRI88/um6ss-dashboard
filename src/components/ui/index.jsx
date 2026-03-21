@@ -1,39 +1,46 @@
 import React from 'react';
 import { COLORS } from '../../config/theme';
+import { useTheme } from '../../config/ThemeContext';
 import { exportTableAsCSV } from '../../utils/csvExport';
 
 // ═══════════════════════════════════════════════
-// SHARED UI COMPONENTS
+// SHARED UI COMPONENTS (theme-aware)
 // ═══════════════════════════════════════════════
 
-export const KPICard = ({ label, value, sub, trend, color, tooltip, small }) => (
-  <div style={{
-    background: COLORS.white, borderRadius: 12, padding: small ? '14px 16px' : '20px 24px',
-    border: `1px solid ${COLORS.border}`, flex: 1, minWidth: small ? 140 : 180,
-    borderTop: `3px solid ${color || COLORS.primary}`,
-  }} title={tooltip || ''}>
-    <div style={{ fontSize: 11, color: COLORS.medium, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-      {label}
-    </div>
+export const KPICard = ({ label, value, sub, trend, color, tooltip, small }) => {
+  const { mode, accentColor, colors, cardStyle } = useTheme();
+  const borderColor = color || accentColor;
+  return (
     <div style={{
-      fontSize: small ? 24 : 32, fontWeight: 700, color: COLORS.dark, marginTop: 4,
-      fontFamily: "'DM Sans', sans-serif",
-    }}>
-      {value}
-    </div>
-    {sub && <div style={{ fontSize: 12, color: COLORS.medium, marginTop: 2 }}>{sub}</div>}
-    {trend != null && trend !== undefined && (
-      <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: trend >= 0 ? COLORS.good : COLORS.bad }}>
-        {trend >= 0 ? '▲' : '▼'} {Math.abs(trend)}%
-        <span style={{ color: COLORS.medium, fontWeight: 400 }}> vs période préc.</span>
+      ...cardStyle,
+      padding: small ? '14px 16px' : '20px 24px',
+      flex: 1, minWidth: small ? 140 : 180,
+      borderTop: `3px solid ${borderColor}`,
+    }} title={tooltip || ''}>
+      <div style={{ fontSize: 11, color: colors.medium, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        {label}
       </div>
-    )}
-  </div>
-);
+      <div style={{
+        fontSize: small ? 24 : 32, fontWeight: 700, color: colors.dark, marginTop: 4,
+        fontFamily: mode.font,
+      }}>
+        {value}
+      </div>
+      {sub && <div style={{ fontSize: 12, color: colors.medium, marginTop: 2 }}>{sub}</div>}
+      {trend != null && trend !== undefined && (
+        <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: trend >= 0 ? colors.good : colors.bad }}>
+          {trend >= 0 ? '▲' : '▼'} {Math.abs(trend)}%
+          <span style={{ color: colors.medium, fontWeight: 400 }}> vs période préc.</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const AlertBadge = ({ level, text }) => {
+  const { colors } = useTheme();
   const bg = level === 2 ? '#FDE8E8' : level === 1 ? '#FEF3E2' : '#E8F5E8';
-  const fg = level === 2 ? COLORS.bad : level === 1 ? COLORS.warning : COLORS.good;
+  const fg = level === 2 ? colors.bad : level === 1 ? colors.warning : colors.good;
   const icon = level === 2 ? '🔴' : level === 1 ? '🟠' : '🟢';
   return (
     <div style={{
@@ -45,56 +52,72 @@ export const AlertBadge = ({ level, text }) => {
   );
 };
 
-export const SectionTitle = ({ children }) => (
-  <h2 style={{
-    fontSize: 16, fontWeight: 700, color: COLORS.dark, margin: '28px 0 16px',
-    fontFamily: "'DM Sans', sans-serif",
-    borderBottom: `2px solid ${COLORS.primary}`, paddingBottom: 8, display: 'inline-block',
-  }}>{children}</h2>
-);
+export const SectionTitle = ({ children }) => {
+  const { accentColor, colors, mode } = useTheme();
+  return (
+    <h2 style={{
+      fontSize: 16, fontWeight: 700, color: colors.dark, margin: '28px 0 16px',
+      fontFamily: mode.font,
+      borderBottom: `2px solid ${accentColor}`, paddingBottom: 8, display: 'inline-block',
+    }}>{children}</h2>
+  );
+};
 
-export const ProgressBar = ({ value, max, color, height = 6 }) => (
-  <div style={{ height, background: COLORS.light, borderRadius: height / 2, overflow: 'hidden', width: '100%' }}>
-    <div style={{
-      height: '100%', width: `${Math.min(100, max > 0 ? (value / max) * 100 : 0)}%`,
-      background: color || COLORS.primary, borderRadius: height / 2, transition: 'width 0.6s ease',
-    }} />
-  </div>
-);
-
-export const LoadingOverlay = ({ message }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: COLORS.medium }}>
-    <div style={{ width: 40, height: 40, border: `3px solid ${COLORS.border}`, borderTop: `3px solid ${COLORS.primary}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: 16 }} />
-    <div style={{ fontSize: 14 }}>{message || 'Chargement...'}</div>
-    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-  </div>
-);
-
-export const ErrorBanner = ({ error, onRetry }) => (
-  <div style={{ background: '#FDE8E8', border: `1px solid ${COLORS.bad}`, borderRadius: 10, padding: '16px 20px', margin: '20px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
-    <span style={{ fontSize: 20 }}>⚠️</span>
-    <div style={{ flex: 1 }}>
-      <div style={{ fontWeight: 700, color: COLORS.bad, fontSize: 13 }}>Erreur de connexion</div>
-      <div style={{ fontSize: 12, color: COLORS.dark, marginTop: 2 }}>{error}</div>
+export const ProgressBar = ({ value, max, color, height = 6 }) => {
+  const { colors, accentColor } = useTheme();
+  return (
+    <div style={{ height, background: colors.light, borderRadius: height / 2, overflow: 'hidden', width: '100%' }}>
+      <div style={{
+        height: '100%', width: `${Math.min(100, max > 0 ? (value / max) * 100 : 0)}%`,
+        background: color || accentColor, borderRadius: height / 2, transition: 'width 0.6s ease',
+      }} />
     </div>
-    {onRetry && <button onClick={onRetry} style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${COLORS.bad}`, background: COLORS.white, color: COLORS.bad, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Réessayer</button>}
-  </div>
-);
+  );
+};
 
-export const EmptyState = ({ icon = '📭', title, subtitle }) => (
-  <div style={{ textAlign: 'center', padding: '60px 20px', color: COLORS.medium }}>
-    <div style={{ fontSize: 48, marginBottom: 16 }}>{icon}</div>
-    <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{title}</div>
-    {subtitle && <div style={{ fontSize: 13 }}>{subtitle}</div>}
-  </div>
-);
+export const LoadingOverlay = ({ message }) => {
+  const { colors, accentColor } = useTheme();
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: colors.medium }}>
+      <div style={{ width: 40, height: 40, border: `3px solid ${colors.border}`, borderTop: `3px solid ${accentColor}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: 16 }} />
+      <div style={{ fontSize: 14 }}>{message || 'Chargement...'}</div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+};
+
+export const ErrorBanner = ({ error, onRetry }) => {
+  const { colors, cardStyle } = useTheme();
+  return (
+    <div style={{ background: '#FDE8E8', border: `1px solid ${colors.bad}`, borderRadius: cardStyle.borderRadius, padding: '16px 20px', margin: '20px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <span style={{ fontSize: 20 }}>⚠️</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 700, color: colors.bad, fontSize: 13 }}>Erreur de connexion</div>
+        <div style={{ fontSize: 12, color: colors.dark, marginTop: 2 }}>{error}</div>
+      </div>
+      {onRetry && <button onClick={onRetry} style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${colors.bad}`, background: '#FFFFFF', color: colors.bad, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Réessayer</button>}
+    </div>
+  );
+};
+
+export const EmptyState = ({ icon = '📭', title, subtitle }) => {
+  const { colors } = useTheme();
+  return (
+    <div style={{ textAlign: 'center', padding: '60px 20px', color: colors.medium }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>{icon}</div>
+      <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{title}</div>
+      {subtitle && <div style={{ fontSize: 13 }}>{subtitle}</div>}
+    </div>
+  );
+};
 
 /**
- * Sortable data table with CSV export.
+ * Sortable data table with CSV export (theme-aware).
  */
 export const DataTable = ({ columns, data, title, sortable = true, exportFilename }) => {
   const [sortCol, setSortCol] = React.useState(null);
   const [sortDir, setSortDir] = React.useState('desc');
+  const { mode, colors, cardStyle, accentColor } = useTheme();
 
   const sorted = React.useMemo(() => {
     if (!sortCol || !sortable) return data;
@@ -111,13 +134,13 @@ export const DataTable = ({ columns, data, title, sortable = true, exportFilenam
   };
 
   return (
-    <div style={{ background: COLORS.white, borderRadius: 12, border: `1px solid ${COLORS.border}`, overflow: 'auto', marginBottom: 20 }}>
+    <div style={{ ...cardStyle, overflow: 'auto', marginBottom: 20 }}>
       {(title || exportFilename) && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: `1px solid ${COLORS.border}` }}>
-          {title && <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.dark }}>{title}</div>}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: `1px solid ${colors.border}` }}>
+          {title && <div style={{ fontSize: 13, fontWeight: 700, color: colors.dark }}>{title}</div>}
           {exportFilename && data.length > 0 && (
             <button onClick={() => exportTableAsCSV(data, exportFilename, columns.map(c => c.key))}
-              style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.light, fontSize: 11, cursor: 'pointer', color: COLORS.medium }}>
+              style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid ${colors.border}`, background: colors.light, fontSize: 11, cursor: 'pointer', color: colors.medium }}>
               📥 CSV
             </button>
           )}
@@ -125,7 +148,7 @@ export const DataTable = ({ columns, data, title, sortable = true, exportFilenam
       )}
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
         <thead>
-          <tr style={{ background: COLORS.primary, color: COLORS.white }}>
+          <tr style={{ background: mode.tableHeaderBg, color: mode.tableHeaderColor }}>
             {columns.map(col => (
               <th key={col.key} onClick={() => sortable && toggleSort(col.key)} style={{
                 padding: '10px 12px', textAlign: col.align || 'left', fontWeight: 600, fontSize: 11,
@@ -139,7 +162,7 @@ export const DataTable = ({ columns, data, title, sortable = true, exportFilenam
         </thead>
         <tbody>
           {sorted.map((row, i) => (
-            <tr key={row.id || i} style={{ borderBottom: `1px solid ${COLORS.border}`, background: i % 2 === 0 ? COLORS.white : COLORS.light }}>
+            <tr key={row.id || i} style={{ borderBottom: `1px solid ${colors.border}`, background: i % 2 === 0 ? mode.cardBg : mode.tableStripeBg }}>
               {columns.map(col => (
                 <td key={col.key} style={{ padding: '10px 12px', textAlign: col.align || 'left', ...col.style?.(row) }}>
                   {col.render ? col.render(row[col.key], row) : row[col.key]}
@@ -149,7 +172,7 @@ export const DataTable = ({ columns, data, title, sortable = true, exportFilenam
           ))}
         </tbody>
       </table>
-      {data.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: COLORS.medium, fontSize: 12 }}>Aucune donnée</div>}
+      {data.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: colors.medium, fontSize: 12 }}>Aucune donnée</div>}
     </div>
   );
 };
@@ -176,7 +199,6 @@ export const CampaignProgressBar = ({ start, end }) => {
 };
 
 export const ConfidenceScore = ({ level }) => {
-  // level: 'ok' | 'warning' | 'error'
   const config = {
     ok: { color: COLORS.good, label: 'Données OK', bg: 'rgba(42,160,55,0.15)' },
     warning: { color: COLORS.warning, label: 'Vérifier', bg: 'rgba(232,130,12,0.15)' },

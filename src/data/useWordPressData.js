@@ -5,25 +5,36 @@ import { MAX_PER_PAGE, WP_ENDPOINTS } from '../config/api';
 // DATA LAYER — WordPress REST API
 // ═══════════════════════════════════════════════
 
-async function apiFetch(baseUrl, endpoint, params, apiKey) {
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function apiFetch(baseUrl, endpoint, params, apiKey, retries = 3) {
   const url = new URL(`${baseUrl}${endpoint}`);
   Object.entries(params).forEach(([k, v]) => {
     if (v != null && v !== '') url.searchParams.set(k, v);
   });
 
-  const res = await fetch(url.toString(), {
-    headers: { 'X-UM6SS-API-Key': apiKey, Accept: 'application/json' },
-  });
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url.toString(), {
+      headers: { 'X-UM6SS-API-Key': apiKey, Accept: 'application/json' },
+    });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`${res.status}: ${text || res.statusText}`);
+    if (res.status === 429) {
+      const wait = Math.min(2000 * Math.pow(2, attempt), 15000);
+      await sleep(wait);
+      continue;
+    }
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`${res.status}: ${text || res.statusText}`);
+    }
+
+    const data = await res.json();
+    const total = parseInt(res.headers.get('X-WP-Total') || '0', 10);
+    const totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
+    return { data, total, totalPages };
   }
-
-  const data = await res.json();
-  const total = parseInt(res.headers.get('X-WP-Total') || '0', 10);
-  const totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
-  return { data, total, totalPages };
+  throw new Error('429: Rate limit — trop de requêtes. Réessayez dans quelques secondes.');
 }
 
 async function fetchAll(baseUrl, endpoint, apiKey, extraParams = {}) {
@@ -61,9 +72,13 @@ export function useWordPressData(apiKey, baseUrl) {
     try {
       const schemaResult = await apiFetch(baseUrl, WP_ENDPOINTS.schema, {}, apiKey);
 
-      const [leads, visits, abandons, outcomes, experiments] = await Promise.all([
+      // Fetch sequentially in 2 batches to stay under rate limit
+      const [leads, visits] = await Promise.all([
         fetchAll(baseUrl, WP_ENDPOINTS.leads, apiKey).catch(() => []),
         fetchAll(baseUrl, WP_ENDPOINTS.visits, apiKey).catch(() => []),
+      ]);
+
+      const [abandons, outcomes, experiments] = await Promise.all([
         fetchAll(baseUrl, WP_ENDPOINTS.abandons, apiKey).catch(() => []),
         fetchAll(baseUrl, WP_ENDPOINTS.outcomes, apiKey).catch(() => []),
         fetchAll(baseUrl, WP_ENDPOINTS.experiments, apiKey).catch(() => []),

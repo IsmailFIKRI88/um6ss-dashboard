@@ -5,12 +5,13 @@ import { QUALIFIED_SCORE_MIN, DEFAULT_ALERT_THRESHOLDS, DEFAULT_CAMPAIGN_TIMELIN
 import { KPICard, AlertBadge, SectionTitle, ProgressBar, CampaignProgressBar } from '../components/ui';
 import { CustomTooltip, FunnelBar } from '../components/charts';
 import { buildFunnel, funnelConversionRates } from '../processing/funnel';
-import { computeFinancials } from '../processing/financial';
+import { computeFinancials, weightedFinancialParams } from '../processing/financial';
 import { computeProjection } from '../processing/projection';
+import { PROGRAMS_BY_ENTITY } from '../config/programs';
 import { fmt } from '../utils/formatters';
 import { daysAgo, groupByDate } from '../utils/dateHelpers';
 
-export default function ViewSituation({ leads, visits, adSpend, outcomes, experiments, dateRange }) {
+export default function ViewSituation({ leads, visits, adSpend, outcomes, experiments, dateRange, financialSettings }) {
   const [mode, setMode] = useState('pilotage'); // pilotage | direction
 
   // ── Core metrics ──
@@ -62,21 +63,22 @@ export default function ViewSituation({ leads, visits, adSpend, outcomes, experi
 
   // ── Financials (for direction mode — only meaningful with real outcomes) ──
   const hasOutcomes = enrolled > 0;
+  const wParams = useMemo(() => weightedFinancialParams(leads, financialSettings), [leads, financialSettings]);
   const financials = useMemo(() => hasOutcomes ? computeFinancials({
     totalSpend,
-    monthlyFixedCosts: 0,
+    marketingFixedCosts: wParams.marketingFixedCosts,
     monthsActive: Math.max(1, Math.ceil(proj.elapsed / 30)),
     enrolledCount: enrolled,
-    avgAnnualFees: 65000, // TODO: should come from wp_options via /reference-data endpoint
-    avgProgramDuration: 3.5,
-  }) : null, [totalSpend, enrolled, proj.elapsed, hasOutcomes]);
+    weightedLTV: wParams.weightedLTV,
+    avgAnnualFees: wParams.avgAnnualFees,
+    registrationFees: wParams.registrationFees,
+  }) : null, [totalSpend, enrolled, proj.elapsed, hasOutcomes, wParams]);
 
-  // ── Faculty fill rates (direction mode) ──
+  // ── Faculty fill rates (direction mode — with capacity) ──
   const facultyFill = useMemo(() => {
     const byFac = {};
     leads.forEach(l => {
       const entity = l.lp_entite || l.entity_code || 'Autre';
-      // Try to find the entity code
       let code = 'Autre';
       for (const [k, v] of Object.entries(FACULTY_LABELS)) {
         if (entity.toLowerCase().includes(v.toLowerCase()) || entity.includes(k)) { code = k; break; }
@@ -86,10 +88,16 @@ export default function ViewSituation({ leads, visits, adSpend, outcomes, experi
       if (Number(l.score) >= QUALIFIED_SCORE_MIN) byFac[code].qualified++;
       if (l.outcome === 'enrolled' || l.outcome === 'inscrit') byFac[code].enrolled++;
     });
-    return Object.entries(byFac).map(([code, d]) => ({
-      code, name: FACULTY_LABELS[code] || code, color: FACULTY_COLORS[code] || COLORS.medium, ...d,
-    })).sort((a, b) => b.leads - a.leads);
-  }, [leads]);
+    return Object.entries(byFac).map(([code, d]) => {
+      const programs = PROGRAMS_BY_ENTITY[code] || [];
+      let totalCap = 0;
+      for (const p of programs) totalCap += (financialSettings?.[p.id]?.maxCapacity || 0);
+      return {
+        code, name: FACULTY_LABELS[code] || code, color: FACULTY_COLORS[code] || COLORS.medium,
+        ...d, maxCapacity: totalCap,
+      };
+    }).sort((a, b) => b.leads - a.leads);
+  }, [leads, financialSettings]);
 
   return (
     <div>
@@ -159,7 +167,7 @@ export default function ViewSituation({ leads, visits, adSpend, outcomes, experi
           {financials ? (
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
               <KPICard label="Coût Total Campagne" value={fmt.mad(financials.fullCost)} tooltip="Media spend + coûts fixes" color={COLORS.dark} />
-              <KPICard label="Revenue Projeté" value={fmt.mad(financials.projectedRevenue)} tooltip="Inscrits × LTV" color={COLORS.good} />
+              <KPICard label="CAC" value={financials.fullCAC ? fmt.mad(financials.fullCAC) : '—'} tooltip="Coût d'acquisition complet par inscrit" color={financials.fullCAC && financials.fullCAC > 5000 ? COLORS.bad : COLORS.good} />
               <KPICard label="ROAS" value={financials.roas ? `${financials.roas}x` : '—'} tooltip="Revenue / Coût total" color={COLORS.primary} />
               <KPICard label="Payback" value={financials.paybackMonths ? `${financials.paybackMonths} mois` : '—'} tooltip="Mois avant que le revenue couvre le CAC" color={COLORS.accent} />
               <KPICard label="Inscrits" value={enrolled} sub={`sur ${totalLeads} leads`} color={COLORS.good} />
@@ -195,19 +203,40 @@ export default function ViewSituation({ leads, visits, adSpend, outcomes, experi
           {/* Faculty fill rates */}
           <SectionTitle>Remplissage par Entité</SectionTitle>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {facultyFill.map((f, i) => (
-              <div key={i} style={{
-                background: COLORS.white, borderRadius: 10, padding: '14px 16px',
-                border: `1px solid ${COLORS.border}`, borderLeft: `4px solid ${f.color}`,
-                flex: '1 1 160px', minWidth: 155,
-              }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: f.color, textTransform: 'uppercase' }}>{f.name}</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: COLORS.dark, margin: '4px 0' }}>{f.leads}</div>
-                <div style={{ fontSize: 10, color: COLORS.medium }}>
-                  {f.qualified} qualifiés · {f.enrolled} inscrits
+            {facultyFill.map((f, i) => {
+              const hasCap = f.maxCapacity > 0;
+              const fillPct = hasCap ? Math.round(f.enrolled / f.maxCapacity * 100) : null;
+              const fillColor = fillPct >= 90 ? COLORS.good : fillPct >= 60 ? COLORS.accent : fillPct >= 1 ? COLORS.warning : COLORS.border;
+
+              return (
+                <div key={i} style={{
+                  background: COLORS.white, borderRadius: 10, padding: '14px 16px',
+                  border: `1px solid ${COLORS.border}`, borderLeft: `4px solid ${f.color}`,
+                  flex: '1 1 175px', minWidth: 170,
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: f.color, textTransform: 'uppercase' }}>{f.name}</div>
+                  {hasCap ? (
+                    <>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: COLORS.dark, margin: '4px 0' }}>
+                        {f.enrolled} <span style={{ fontSize: 12, fontWeight: 500, color: COLORS.medium }}>/ {f.maxCapacity}</span>
+                      </div>
+                      <div style={{ height: 6, background: COLORS.light, borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
+                        <div style={{ height: '100%', width: `${Math.min(fillPct, 100)}%`, background: fillColor, borderRadius: 3, transition: 'width 0.4s ease' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: COLORS.medium }}>
+                        <span>{fillPct}% rempli</span>
+                        <span>{f.leads} leads</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: COLORS.dark, margin: '4px 0' }}>{f.leads}</div>
+                      <div style={{ fontSize: 10, color: COLORS.medium }}>{f.qualified} qualifiés · {f.enrolled} inscrits</div>
+                    </>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}

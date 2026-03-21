@@ -5,18 +5,31 @@ import { MAX_PER_PAGE, ADS_ENDPOINTS } from '../config/api';
 // DATA LAYER — Ad Spend (from WordPress REST API)
 // ═══════════════════════════════════════════════
 
-async function adsFetch(baseUrl, endpoint, params, apiKey) {
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function adsFetch(baseUrl, endpoint, params, apiKey, retries = 3) {
   const url = new URL(`${baseUrl}${endpoint}`);
   Object.entries(params).forEach(([k, v]) => {
     if (v != null && v !== '') url.searchParams.set(k, v);
   });
-  const res = await fetch(url.toString(), {
-    headers: { 'X-UM6SS-API-Key': apiKey, Accept: 'application/json' },
-  });
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text().catch(() => res.statusText)}`);
-  const data = await res.json();
-  const totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
-  return { data, totalPages };
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url.toString(), {
+      headers: { 'X-UM6SS-API-Key': apiKey, Accept: 'application/json' },
+    });
+
+    if (res.status === 429) {
+      const wait = Math.min(2000 * Math.pow(2, attempt), 15000);
+      await sleep(wait);
+      continue;
+    }
+
+    if (!res.ok) throw new Error(`${res.status}: ${await res.text().catch(() => res.statusText)}`);
+    const data = await res.json();
+    const totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
+    return { data, totalPages };
+  }
+  throw new Error('429: Rate limit — trop de requêtes. Réessayez dans quelques secondes.');
 }
 
 async function adsFetchAll(baseUrl, endpoint, apiKey, extraParams = {}) {
@@ -45,7 +58,6 @@ export function useAdSpendData(apiKey, baseUrl) {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      // Check if ad-spend tables exist via ad-schema
       const schemaRes = await adsFetch(baseUrl, ADS_ENDPOINTS.adSchema, {}, apiKey);
       const adSchema = schemaRes.data;
 
@@ -59,8 +71,9 @@ export function useAdSpendData(apiKey, baseUrl) {
         return;
       }
 
-      const [spend, breakdowns, video] = await Promise.all([
-        adsFetchAll(baseUrl, ADS_ENDPOINTS.adSpend, apiKey, { min_spend: 0.01 }).catch(() => []),
+      // Fetch sequentially to avoid rate limit burst
+      const spend = await adsFetchAll(baseUrl, ADS_ENDPOINTS.adSpend, apiKey, { min_spend: 0.01 }).catch(() => []);
+      const [breakdowns, video] = await Promise.all([
         adsFetchAll(baseUrl, ADS_ENDPOINTS.adBreakdowns, apiKey).catch(() => []),
         adsFetchAll(baseUrl, ADS_ENDPOINTS.adVideo, apiKey).catch(() => []),
       ]);
