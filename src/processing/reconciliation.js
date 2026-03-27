@@ -35,15 +35,19 @@ export function reconciliate(leads, adSpend) {
   // Match leads to campaigns
   const result = Object.values(byCampaign).map(campaign => {
     const matchedLeads = leads.filter(lead => {
-      // Match by click IDs (most reliable)
-      if (campaign.platform === 'meta' && lead.fbclid) return true;
-      if (campaign.platform === 'google' && lead.gclid) return true;
-      if (campaign.platform === 'tiktok' && lead.ttclid) return true;
-      if (campaign.platform === 'linkedin' && lead.li_fat_id) return true;
-      // Match by utm_campaign (requires naming convention)
+      // Match by utm_campaign first (most precise — ties lead to specific campaign)
       if (lead.utm_campaign && campaign.campaign_name) {
         if (lead.utm_campaign === campaign.campaign_name) return true;
+        if (lead.utm_campaign === campaign.campaign_id) return true;
         if (lead.utm_campaign.toLowerCase().includes(campaign.campaign_name.toLowerCase())) return true;
+      }
+      // Fallback: click ID + platform match (attributes to platform, not specific campaign)
+      // Only use if lead has no utm_campaign (otherwise utm_campaign already matched or didn't)
+      if (!lead.utm_campaign) {
+        if (campaign.platform === 'meta' && lead.fbclid) return true;
+        if (campaign.platform === 'google' && lead.gclid) return true;
+        if (campaign.platform === 'tiktok' && lead.ttclid) return true;
+        if (campaign.platform === 'linkedin' && lead.li_fat_id) return true;
       }
       return false;
     });
@@ -70,12 +74,10 @@ export function reconciliate(leads, adSpend) {
 
   // Non-attributable leads (organic/direct)
   const attributedLeadIds = new Set();
-  result.forEach(r => {
-    leads.forEach(l => {
-      if (l.utm_campaign || l.gclid || l.fbclid || l.ttclid || l.li_fat_id) {
-        attributedLeadIds.add(l.id);
-      }
-    });
+  leads.forEach(l => {
+    if (l.utm_campaign || l.gclid || l.fbclid || l.ttclid || l.li_fat_id) {
+      attributedLeadIds.add(l.id);
+    }
   });
   const nonAttributable = leads.filter(l => !attributedLeadIds.has(l.id));
 

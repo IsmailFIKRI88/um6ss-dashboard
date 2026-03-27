@@ -12,4 +12,8 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
   },
+  test: {
+    globals: true,
+    environment: 'node',
+  },
 });
