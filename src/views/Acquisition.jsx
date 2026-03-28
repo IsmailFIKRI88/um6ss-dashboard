@@ -9,11 +9,12 @@ import { reconciliate } from '../processing/reconciliation';
 import { computeBudgetPacing } from '../processing/budgetPacing';
 import { reattribute } from '../processing/attribution';
 import { fmt } from '../utils/formatters';
-import { groupByDate } from '../utils/dateHelpers';
+import { groupByDate, daysAgo } from '../utils/dateHelpers';
 
 export default function ViewAcquisition({ leads, adSpend, adBreakdowns, dateRange }) {
   const { colors, cardStyle, accentColor, mode } = useTheme();
   const [attributionModel, setAttributionModel] = useState('last-touch');
+  const [statusFilter, setStatusFilter] = useState('all'); // all | active | paused
   const [drillChannel, setDrillChannel] = useState(null);
   const [drillCampaign, setDrillCampaign] = useState(null);
 
@@ -42,11 +43,32 @@ export default function ViewAcquisition({ leads, adSpend, adBreakdowns, dateRang
     })).sort((a, b) => b.spend - a.spend);
   }, [recon.campaigns]);
 
-  // ── Niveau 2 : campagnes du canal sélectionné ──
+  // ── Trends: current period vs previous period ──
+  const trends = useMemo(() => {
+    const recentDate = daysAgo(14);
+    const prevDate = daysAgo(28);
+    const recent = leads.filter(l => (l.created_at || '') >= recentDate);
+    const prev = leads.filter(l => (l.created_at || '') >= prevDate && (l.created_at || '') < recentDate);
+    const recentSpend = adSpend.filter(r => (r.date || '') >= recentDate).reduce((s, r) => s + (r.spend || 0), 0);
+    const prevSpend = adSpend.filter(r => (r.date || '') >= prevDate && (r.date || '') < recentDate).reduce((s, r) => s + (r.spend || 0), 0);
+    const recentCPL = recent.length > 0 ? recentSpend / recent.length : 0;
+    const prevCPL = prev.length > 0 ? prevSpend / prev.length : 0;
+    return {
+      leads: prev.length > 0 ? Math.round((recent.length - prev.length) / prev.length * 100) : null,
+      cpl: prevCPL > 0 ? Math.round((recentCPL - prevCPL) / prevCPL * 100) : null,
+      spend: prevSpend > 0 ? Math.round((recentSpend - prevSpend) / prevSpend * 100) : null,
+    };
+  }, [leads, adSpend]);
+
+  // ── Niveau 2 : campagnes du canal sélectionné (with status filter) ──
   const channelCampaigns = useMemo(() => {
     if (!drillChannel) return [];
-    return recon.campaigns.filter(c => c.platform === drillChannel);
-  }, [recon.campaigns, drillChannel]);
+    let campaigns = recon.campaigns.filter(c => c.platform === drillChannel);
+    if (statusFilter !== 'all') {
+      campaigns = campaigns.filter(c => (c.campaign_status || '').toLowerCase().includes(statusFilter));
+    }
+    return campaigns;
+  }, [recon.campaigns, drillChannel, statusFilter]);
 
   // ── Évolution CPL dans le temps ──
   const cplTimeline = useMemo(() => {
@@ -122,11 +144,11 @@ export default function ViewAcquisition({ leads, adSpend, adBreakdowns, dateRang
 
       {/* Summary KPIs */}
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
-        <KPICard small label="Spend Total" value={fmt.mad(recon.totals.spend)} color={colors.dark} />
-        <KPICard small label="Leads WordPress" value={fmt.number(recon.totals.wpLeads)} />
-        <KPICard small label="Leads Qualifiés" value={fmt.number(recon.totals.wpQualified)} color={colors.good} />
-        <KPICard small label="CPL Moyen" value={recon.totals.wpLeads > 0 ? fmt.mad(Math.round(recon.totals.spend / recon.totals.wpLeads)) : '—'} color={accentColor} tooltip="Spend total ÷ leads WordPress" />
-        <KPICard small label="Non-attribués" value={fmt.number(recon.nonAttributable.count)} sub={`score moy: ${recon.nonAttributable.avgScore}`} color={colors.medium} tooltip="Leads organic/direct sans UTM" />
+        <KPICard small label="Spend Total" value={fmt.mad(recon.totals.spend)} trend={trends.spend} color={colors.dark} tooltip="Total des dépenses publicitaires sur la période" />
+        <KPICard small label="Candidatures" value={fmt.number(recon.totals.wpLeads)} trend={trends.leads} tooltip="Leads WordPress réconciliés avec les campagnes" />
+        <KPICard small label="Qualifiés" value={fmt.number(recon.totals.wpQualified)} color={colors.good} tooltip="Candidatures avec score de qualité ≥ 60" />
+        <KPICard small label="CPL Moyen" value={recon.totals.wpLeads > 0 ? fmt.mad(Math.round(recon.totals.spend / recon.totals.wpLeads)) : '—'} trend={trends.cpl ? -trends.cpl : null} color={accentColor} tooltip="Coût par candidature réelle (spend ÷ leads WordPress). Trend inversé : baisse = amélioration." />
+        <KPICard small label="Non-attribués" value={fmt.number(recon.nonAttributable.count)} sub={`score moy: ${recon.nonAttributable.avgScore}`} color={colors.medium} tooltip="Candidatures organiques/directes sans tracking publicitaire" />
       </div>
 
       {/* ── Niveau 1 : Cards par canal ── */}
@@ -173,6 +195,20 @@ export default function ViewAcquisition({ leads, adSpend, adBreakdowns, dateRang
       {/* ── Niveau 2 : Table campagnes du canal sélectionné ── */}
       {drillChannel && (
         <>
+          {/* Status filter */}
+          <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+            {['all', 'active', 'paused'].map(s => (
+              <button key={s} onClick={() => setStatusFilter(s)} style={{
+                padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer',
+                border: `1px solid ${statusFilter === s ? accentColor : colors.border}`,
+                background: statusFilter === s ? accentColor : mode.cardBg,
+                color: statusFilter === s ? '#FFFFFF' : colors.medium,
+                fontFamily: mode.font,
+              }}>
+                {s === 'all' ? 'Toutes' : s === 'active' ? '🟢 Actives' : '⏸️ Pausées'}
+              </button>
+            ))}
+          </div>
           <DataTable
             columns={campaignColumns}
             data={channelCampaigns}

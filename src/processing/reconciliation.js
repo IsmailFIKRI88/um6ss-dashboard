@@ -32,25 +32,47 @@ export function reconciliate(leads, adSpend) {
     c.reach += row.reach || 0;
   });
 
-  // Match leads to campaigns
-  const result = Object.values(byCampaign).map(campaign => {
-    const matchedLeads = leads.filter(lead => {
-      // Match by utm_campaign first (most precise — ties lead to specific campaign)
-      if (lead.utm_campaign && campaign.campaign_name) {
-        if (lead.utm_campaign === campaign.campaign_name) return true;
-        if (lead.utm_campaign === campaign.campaign_id) return true;
-        if (lead.utm_campaign.toLowerCase().includes(campaign.campaign_name.toLowerCase())) return true;
+  // Single-pass lead assignment: each lead is assigned to exactly ONE campaign
+  // Priority: exact campaign_id > exact campaign_name > substring match > click ID fallback
+  const campaigns = Object.values(byCampaign);
+  const leadAssignment = new Map(); // lead.id → campaign key
+
+  leads.forEach(lead => {
+    if (leadAssignment.has(lead.id)) return;
+    let bestMatch = null;
+    let bestPriority = 0;
+
+    for (const campaign of campaigns) {
+      const key = `${campaign.platform}::${campaign.campaign_id}`;
+      let priority = 0;
+
+      if (lead.utm_campaign) {
+        if (lead.utm_campaign === campaign.campaign_id) priority = 4;
+        else if (lead.utm_campaign === campaign.campaign_name) priority = 3;
+        else if (campaign.campaign_name && lead.utm_campaign.toLowerCase().includes(campaign.campaign_name.toLowerCase())) priority = 2;
+      } else {
+        // Click ID fallback: assign to highest-spend campaign of the platform
+        if (campaign.platform === 'meta' && lead.fbclid) priority = 1;
+        else if (campaign.platform === 'google' && lead.gclid) priority = 1;
+        else if (campaign.platform === 'tiktok' && lead.ttclid) priority = 1;
+        else if (campaign.platform === 'linkedin' && lead.li_fat_id) priority = 1;
       }
-      // Fallback: click ID + platform match (attributes to platform, not specific campaign)
-      // Only use if lead has no utm_campaign (otherwise utm_campaign already matched or didn't)
-      if (!lead.utm_campaign) {
-        if (campaign.platform === 'meta' && lead.fbclid) return true;
-        if (campaign.platform === 'google' && lead.gclid) return true;
-        if (campaign.platform === 'tiktok' && lead.ttclid) return true;
-        if (campaign.platform === 'linkedin' && lead.li_fat_id) return true;
+
+      if (priority > bestPriority || (priority === bestPriority && priority === 1 && campaign.spend > (bestMatch?.spend || 0))) {
+        bestPriority = priority;
+        bestMatch = { key, campaign };
       }
-      return false;
-    });
+    }
+
+    if (bestMatch) {
+      leadAssignment.set(lead.id, bestMatch.key);
+    }
+  });
+
+  // Build results per campaign
+  const result = campaigns.map(campaign => {
+    const key = `${campaign.platform}::${campaign.campaign_id}`;
+    const matchedLeads = leads.filter(l => leadAssignment.get(l.id) === key);
 
     const wpLeads = matchedLeads.length;
     const wpQualified = matchedLeads.filter(l => Number(l.score) >= QUALIFIED_SCORE_MIN).length;

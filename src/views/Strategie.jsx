@@ -11,6 +11,7 @@ import { daysAgo } from '../utils/dateHelpers';
 import { extractEntityCode } from '../utils/extractEntity';
 import { computeMarketSizing, computeSOVMetrics } from '../processing/marketSizing';
 import { MarketFunnel } from '../components/charts/MarketFunnel';
+import { buildFunnel } from '../processing/funnel';
 
 export default function ViewStrategie({ leads, visits, adSpend, outcomes, experiments, dateRange, financialSettings, marketSizingSettings }) {
   const { colors, cardStyle, accentColor, mode } = useTheme();
@@ -88,6 +89,9 @@ export default function ViewStrategie({ leads, visits, adSpend, outcomes, experi
     }).sort((a, b) => b.leads - a.leads);
   }, [leads, financialSettings]);
 
+  // ── Funnel 8 étapes ──
+  const funnel = useMemo(() => buildFunnel(leads, visits, adSpend, outcomes), [leads, visits, adSpend, outcomes]);
+
   // ── Market Sizing (Fermi) ──
   const marketSizing = useMemo(() => {
     if (!marketSizingSettings) return null;
@@ -147,6 +151,40 @@ export default function ViewStrategie({ leads, visits, adSpend, outcomes, experi
           <div><span style={{ color: colors.medium }}>Jours restants :</span> <strong>{proj.remaining}</strong></div>
         </div>
       </div>
+
+      {/* Funnel Acquisition */}
+      {funnel.some(s => s.value > 0) && (
+        <>
+          <SectionTitle>Funnel Acquisition</SectionTitle>
+          <div style={{ ...cardStyle, padding: 20, marginBottom: 24 }}>
+            {funnel.map((step, i) => {
+              const maxVal = funnel[0].value || 1;
+              const pct = maxVal > 0 ? (step.value / maxVal * 100) : 0;
+              const convRate = i > 0 && funnel[i - 1].value > 0
+                ? Math.round(step.value / funnel[i - 1].value * 100)
+                : 100;
+              return (
+                <div key={step.name} style={{ marginBottom: i < funnel.length - 1 ? 8 : 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: colors.medium, minWidth: 100 }}>{step.name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: colors.dark, fontFamily: mode.fontMono || 'monospace' }}>
+                      {fmt.number(step.value)}
+                      {i > 0 && <span style={{ fontSize: 10, fontWeight: 500, color: colors.medium, marginLeft: 6 }}>{convRate}%</span>}
+                    </span>
+                  </div>
+                  <div style={{ height: 14, background: colors.light, borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%', width: `${Math.max(1, pct)}%`,
+                      background: step.fill || accentColor, borderRadius: 3,
+                      transition: 'width 0.4s ease', opacity: 0.8,
+                    }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* Remplissage par Entité — ABOVE Fermi (most actionable for DG) */}
       <SectionTitle>Remplissage par Entité</SectionTitle>

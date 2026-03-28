@@ -9,7 +9,7 @@ export function computeDataQuality(leads) {
   let penaltyPoints = 0;
 
   // Missing critical fields
-  const criticalFields = ['programme_label', 'channel_group', 'score', 'email'];
+  const criticalFields = ['programme_label', 'channel_group', 'score', 'email', 'first_touch_source'];
   const missingRates = {};
   criticalFields.forEach(field => {
     const missing = leads.filter(l => !l[field] || l[field] === '').length;

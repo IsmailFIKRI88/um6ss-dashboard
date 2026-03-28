@@ -8,6 +8,7 @@ describe('computeDataQuality', () => {
     programme_label: 'Médecine',
     channel_group: 'Paid Social',
     score: '50',
+    first_touch_source: 'google',
     bot_score: '10',
     created_at: new Date().toISOString(),
     schema_version: '3.1',
