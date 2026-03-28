@@ -53,9 +53,15 @@ export const Header = ({ leadsCount, adsAvailable, dataQualityLevel, lastRefresh
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <EntityFilter />
           {dataQualityLevel && dataQualityLevel !== 'ok' && <ConfidenceScore level={dataQualityLevel} />}
-          <div style={{ display: 'flex', gap: 4 }}>
-            <div title="WordPress" style={{ width: 8, height: 8, borderRadius: '50%', background: leadsCount > 0 ? COLORS.good : COLORS.medium }} />
-            <div title="Ads" style={{ width: 8, height: 8, borderRadius: '50%', background: adsAvailable ? COLORS.good : COLORS.medium }} />
+          <div style={{ display: 'flex', gap: 6 }}>
+            <div title={`WordPress: ${leadsCount > 0 ? 'connecté' : 'non connecté'}`} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: leadsCount > 0 ? COLORS.good : COLORS.medium }} />
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>WP</span>
+            </div>
+            <div title={`Ads: ${adsAvailable ? 'connectées' : 'non connectées'}`} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: adsAvailable ? COLORS.good : COLORS.medium }} />
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>Ads</span>
+            </div>
           </div>
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>
             {lastRefresh ? lastRefresh.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''}

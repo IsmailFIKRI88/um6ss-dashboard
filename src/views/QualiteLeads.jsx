@@ -236,18 +236,19 @@ export default function ViewQualiteLeads({ leads, adSpend, abandons, outcomes, d
 
   return (
     <div>
-      {/* Top KPIs */}
+      {/* Top KPIs — ordered by urgency: actionable first */}
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 20 }}>
-        <KPICard small label="Leads Total" value={fmt.number(totalLeads)} />
-        <KPICard small label="Taux Conversion" value={totalLeads > 0 ? fmt.pct(enrolled / totalLeads * 100) : '—'}
-          sub={`${enrolled} inscrits`} color={enrolled > 0 ? colors.good : colors.medium}
-          tooltip="Lead → inscrit (nécessite outcomes DSI)" />
-        <KPICard small label="Délai 1er Contact" value={contactDelay ? `${contactDelay}h` : '—'}
-          color={contactDelay && contactDelay > 48 ? colors.bad : colors.good}
-          tooltip="Temps moyen soumission → premier contact" />
         <KPICard small label="Chauds en attente" value={hotNotContactedCount}
           color={hotNotContactedCount > 10 ? colors.bad : hotNotContactedCount > 0 ? colors.warning : colors.good}
-          tooltip="Leads score ≥70 avec outcome = pending" />
+          tooltip="Candidatures avec score ≥70 non encore contactées — à rappeler en priorité" />
+        <KPICard small label="Délai 1er Contact" value={contactDelay ? `${contactDelay}h` : '—'}
+          color={contactDelay && contactDelay > 48 ? colors.bad : colors.good}
+          tooltip="Temps moyen entre la candidature et le premier contact par l'équipe admissions" />
+        <KPICard small label="Taux Conversion" value={totalLeads > 0 ? fmt.pct(enrolled / totalLeads * 100) : '—'}
+          sub={`${enrolled} inscrits`} color={enrolled > 0 ? colors.good : colors.medium}
+          tooltip="Pourcentage de candidatures converties en inscriptions confirmées (nécessite données DSI)" />
+        <KPICard small label="Candidatures" value={fmt.number(totalLeads)}
+          tooltip="Nombre total de formulaires de candidature reçus sur la période" />
       </div>
 
       {/* Device gap alert */}
