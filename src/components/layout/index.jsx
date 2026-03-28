@@ -66,8 +66,18 @@ export const Header = ({ leadsCount, adsAvailable, dataQualityLevel, lastRefresh
   );
 };
 
-export const Navigation = ({ views, activeView, setActiveView, datePreset, setDatePreset }) => {
+export const Navigation = ({ views, activeView, setActiveView, datePreset, setDatePreset, onRefresh, isLoading, lastRefresh }) => {
   const { mode, accentColor, colors } = useTheme();
+  const mainViews = views.filter(v => !v.isSettings);
+  const settingsView = views.find(v => v.isSettings);
+
+  const getRelativeTime = (date) => {
+    if (!date) return '';
+    const mins = Math.round((Date.now() - date.getTime()) / 60000);
+    if (mins < 1) return 'à l\'instant';
+    if (mins < 60) return `il y a ${mins}min`;
+    return `il y a ${Math.round(mins / 60)}h`;
+  };
 
   return (
     <div style={{
@@ -75,8 +85,8 @@ export const Navigation = ({ views, activeView, setActiveView, datePreset, setDa
       padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       boxShadow: mode.id === 'contemporain' ? '0 1px 2px rgba(0,0,0,0.03)' : 'none',
     }}>
-      <div style={{ display: 'flex', gap: 4, overflowX: 'auto' }}>
-        {views.map(v => (
+      <div style={{ display: 'flex', gap: 4, overflowX: 'auto', flex: 1 }}>
+        {mainViews.map(v => (
           <button key={v.id} onClick={() => setActiveView(v.id)} style={{
             padding: '14px 18px', border: 'none', background: 'none', cursor: 'pointer',
             fontSize: 13, fontWeight: activeView === v.id ? 700 : 500,
@@ -88,18 +98,44 @@ export const Navigation = ({ views, activeView, setActiveView, datePreset, setDa
           </button>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 4 }}>
-        {DATE_PRESETS.map(p => (
-          <button key={p.key} onClick={() => setDatePreset(p.key)} style={{
-            padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer',
-            border: `1px solid ${datePreset === p.key ? accentColor : colors.border}`,
-            background: datePreset === p.key ? accentColor : (mode.id === 'funky' ? 'transparent' : '#FFFFFF'),
-            color: datePreset === p.key ? '#FFFFFF' : colors.medium,
-            fontFamily: mode.font,
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        {/* Refresh button */}
+        {onRefresh && (
+          <button onClick={onRefresh} disabled={isLoading} title="Rafraîchir les données" style={{
+            padding: '5px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: isLoading ? 'not-allowed' : 'pointer',
+            border: `1px solid ${colors.border}`, background: mode.id === 'funky' ? 'transparent' : '#FFFFFF',
+            color: colors.medium, fontFamily: mode.font, display: 'flex', alignItems: 'center', gap: 4,
           }}>
-            {p.label}
+            {isLoading ? '⏳' : '🔄'}
+            {lastRefresh && <span>{getRelativeTime(lastRefresh)}</span>}
           </button>
-        ))}
+        )}
+        {/* Date presets */}
+        <div style={{ display: 'flex', gap: 4, borderLeft: `1px solid ${colors.border}`, paddingLeft: 8, marginLeft: 4 }}>
+          {DATE_PRESETS.map(p => (
+            <button key={p.key} onClick={() => setDatePreset(p.key)} aria-label={`Période : ${p.label}`} style={{
+              padding: '5px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer',
+              border: `1px solid ${datePreset === p.key ? accentColor : colors.border}`,
+              background: datePreset === p.key ? accentColor : (mode.id === 'funky' ? 'transparent' : '#FFFFFF'),
+              color: datePreset === p.key ? '#FFFFFF' : colors.medium,
+              fontFamily: mode.font,
+            }}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+        {/* Settings tab */}
+        {settingsView && (
+          <button onClick={() => setActiveView(settingsView.id)} title="Paramètres" style={{
+            padding: '5px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
+            border: activeView === settingsView.id ? `1px solid ${accentColor}` : `1px solid ${colors.border}`,
+            background: activeView === settingsView.id ? accentColor : (mode.id === 'funky' ? 'transparent' : '#FFFFFF'),
+            color: activeView === settingsView.id ? '#FFFFFF' : colors.medium,
+            fontFamily: mode.font, marginLeft: 4,
+          }}>
+            ⚙️
+          </button>
+        )}
       </div>
     </div>
   );

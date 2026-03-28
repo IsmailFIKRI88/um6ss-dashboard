@@ -29,6 +29,7 @@ const ALL_VIEWS = [
   { id: 'acquisition', label: 'Acquisition', icon: '📈' },
   { id: 'qualite-leads', label: 'Qualité Leads', icon: '⭐' },
   { id: 'budget', label: 'Budget', icon: '💰' },
+  { id: 'parametres', label: 'Paramètres', icon: '⚙️', isSettings: true },
 ];
 
 function DashboardInner() {
@@ -141,7 +142,7 @@ function DashboardInner() {
   const renderView = () => {
     if (wp.loading && !wp.leads.length) return <LoadingOverlay message="Chargement depuis WordPress..." />;
     if (wp.error && !wp.leads.length) return <ErrorBanner error={wp.error} onRetry={refresh} />;
-    if (!config.wpApiKey) return <EmptyState icon="🔑" title="Configurez votre connexion" subtitle="Renseignez l'URL et la clé API WordPress ci-dessus." />;
+    if (!config.wpApiKey) return <EmptyState icon="🔑" title="Configurez votre connexion" subtitle={'Allez dans l\'onglet ⚙️ Paramètres pour renseigner l\'URL et la clé API WordPress.'} />;
     if (wp.leads.length === 0 && !wp.loading) return <EmptyState icon="📭" title="Aucun lead" subtitle="Vérifiez que votre site WordPress a des leads et que la clé API est correcte." />;
 
     const viewProps = {
@@ -166,12 +167,15 @@ function DashboardInner() {
   return (
     <div style={{ fontFamily: mode.font, background: mode.bg, minHeight: '100vh', color: colors.dark }}>
       <Header leadsCount={wp.leads.length} adsAvailable={ads.available} dataQualityLevel={dataQuality.level} lastRefresh={wp.lastRefresh || ads.lastRefresh} />
-      <Navigation views={visibleViews} activeView={safeActiveView} setActiveView={setActiveView} datePreset={datePreset} setDatePreset={setDatePreset} />
+      <Navigation views={visibleViews} activeView={safeActiveView} setActiveView={setActiveView} datePreset={datePreset} setDatePreset={setDatePreset} onRefresh={refresh} isLoading={wp.loading} lastRefresh={wp.lastRefresh || ads.lastRefresh} />
       <div style={{ padding: 24, maxWidth: 1280, margin: '0 auto' }}>
-        <SettingsPanel config={config} setConfig={updateConfig} onRefresh={refresh} lastRefresh={wp.lastRefresh} />
-        <FinancialSettingsPanel settings={financialSettings} setSettings={updateFinancialSettings} />
-        <MarketSizingPanel settings={marketSizingSettings} setSettings={updateMarketSizingSettings} />
-        {renderView()}
+        {safeActiveView === 'parametres' ? (
+          <>
+            <SettingsPanel config={config} setConfig={updateConfig} onRefresh={refresh} lastRefresh={wp.lastRefresh} />
+            <FinancialSettingsPanel settings={financialSettings} setSettings={updateFinancialSettings} />
+            <MarketSizingPanel settings={marketSizingSettings} setSettings={updateMarketSizingSettings} />
+          </>
+        ) : renderView()}
       </div>
       <Footer />
       <DesignModePicker />

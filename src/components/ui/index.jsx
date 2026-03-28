@@ -178,6 +178,7 @@ export const DataTable = ({ columns, data, title, sortable = true, exportFilenam
 };
 
 export const CampaignProgressBar = ({ start, end }) => {
+  const { colors, accentColor, mode } = useTheme();
   const now = new Date();
   const s = new Date(start);
   const e = new Date(end);
@@ -186,12 +187,13 @@ export const CampaignProgressBar = ({ start, end }) => {
   const pctTime = Math.round(elapsed / total * 100);
   const dayNum = Math.round(elapsed);
   const totalDays = Math.round(total);
+  const isDark = mode.id === 'funky';
 
   return (
-    <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 6, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>
+    <div style={{ background: isDark ? 'rgba(255,255,255,0.1)' : colors.light, borderRadius: 6, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: isDark ? 'rgba(255,255,255,0.7)' : colors.medium }}>
       <span>Jour {dayNum}/{totalDays}</span>
-      <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.15)', borderRadius: 2, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${pctTime}%`, background: 'rgba(255,255,255,0.6)', borderRadius: 2 }} />
+      <div style={{ flex: 1, height: 4, background: isDark ? 'rgba(255,255,255,0.15)' : colors.border, borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pctTime}%`, background: isDark ? 'rgba(255,255,255,0.6)' : accentColor, borderRadius: 2 }} />
       </div>
       <span>{pctTime}% écoulé</span>
     </div>

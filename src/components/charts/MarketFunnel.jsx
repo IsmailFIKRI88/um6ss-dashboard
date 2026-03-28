@@ -1,4 +1,5 @@
 import React from 'react';
+import { COLORS } from '../../config/theme';
 import { useTheme } from '../../config/ThemeContext';
 
 // ═══════════════════════════════════════════════
@@ -23,7 +24,7 @@ export function MarketFunnel({ tam, sam, som, enrolled = 0 }) {
   const maxVal = tam?.high || tam?.base || 1;
 
   const stages = [
-    { ...STAGES[0], ...tam, color: '#6B85A8' },
+    { ...STAGES[0], ...tam, color: COLORS.fermi },
     { ...STAGES[1], ...sam, color: '#418CCB' },
     { ...STAGES[2], ...som, color: accentColor },
   ];
@@ -33,8 +34,8 @@ export function MarketFunnel({ tam, sam, som, enrolled = 0 }) {
       <div style={{ fontSize: 13, fontWeight: 700, color: colors.dark, marginBottom: 16 }}>
         Entonnoir de marché
         <span style={{
-          marginLeft: 8, fontSize: 10, fontWeight: 600, color: '#6B85A8',
-          background: '#E8EFF7', border: '1px solid #C5D5E8',
+          marginLeft: 8, fontSize: 10, fontWeight: 600, color: COLORS.fermi,
+          background: COLORS.fermiBg, border: `1px solid ${COLORS.fermiBorder}`,
           borderRadius: 10, padding: '2px 8px',
         }}>~ MODÈLE</span>
       </div>
@@ -67,7 +68,7 @@ export function MarketFunnel({ tam, sam, som, enrolled = 0 }) {
                 borderRight: `2px dashed ${s.color}`,
               }} />
             </div>
-            <div style={{ fontSize: 10, color: '#6B85A8', marginTop: 2, fontFamily: 'monospace' }}>
+            <div style={{ fontSize: 10, color: COLORS.fermi, marginTop: 2, fontFamily: 'monospace' }}>
               {fmtK(s.low)} — {fmtK(s.high)}
             </div>
           </div>
@@ -80,13 +81,13 @@ export function MarketFunnel({ tam, sam, som, enrolled = 0 }) {
           <span style={{ fontSize: 11, fontWeight: 600, color: colors.dark }}>
             ✅ Inscrits réels
           </span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#2AA037', fontFamily: 'monospace' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.good, fontFamily: 'monospace' }}>
             {enrolled.toLocaleString('fr-FR')}
           </span>
         </div>
         <div style={{ position: 'relative', height: 20, background: colors.light, borderRadius: 4, overflow: 'hidden' }}>
           <div style={{
-            height: '100%', borderRadius: 4, background: '#2AA037',
+            height: '100%', borderRadius: 4, background: COLORS.good,
             width: `${Math.max(2, (enrolled / maxVal) * 100)}%`,
           }} />
         </div>

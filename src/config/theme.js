@@ -13,6 +13,9 @@ export const COLORS = {
   good: '#2AA037',
   warning: '#E8820C',
   bad: '#CD181B',
+  fermi: '#6B85A8',
+  fermiBg: '#E8EFF7',
+  fermiBorder: '#C5D5E8',
 };
 
 export const FACULTY_COLORS = {
