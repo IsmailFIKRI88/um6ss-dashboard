@@ -36,3 +36,14 @@ Les analyses Phase A des agents (Stratège, Challenger, Architecte, Data Analyst
 UX, Security, Ops, Documentaliste, Financial) ont été intégrées directement
 dans le code et la documentation. Les points clés sont dans les mémoires
 (`.claude/projects/.../memory/`).
+
+## Session 3 — Audit UX/UI (6 agents)
+
+| Fichier | Agent | Mission |
+|---|---|---|
+| [14-ux-researcher.md](14-ux-researcher.md) | UX Researcher | User journeys par profil, matrice importance sections, recommandations réorg |
+| [15-information-architect.md](15-information-architect.md) | Information Architect | Inventaire par vue, wireframes textuels, hiérarchies, élimination doublons |
+| [16-interaction-designer.md](16-interaction-designer.md) | Interaction Designer | Audit des 12 éléments interactifs, a11y, affordances, tableau de priorités |
+| [17-visual-auditor.md](17-visual-auditor.md) | Visual Auditor | 3 problèmes critiques (couleurs hardcodées, contraste, a11y), corrections CSS |
+| [18-mobile-responsive.md](18-mobile-responsive.md) | Mobile & Responsive | 0 media queries, simulation 375px, plan useBreakpoint/bottom nav/carrousel |
+| [19-naive-user-test.md](19-naive-user-test.md) | Naive User Test | Score 3/10, 10 frustrations, verdict "outil marketing déguisé en outil académique" |
