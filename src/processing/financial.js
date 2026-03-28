@@ -40,6 +40,11 @@ export function computeFinancials({
   // Cohort lifetime revenue (null if LTV not configured)
   const cohortRevenue = weightedLTV > 0 ? enrolledCount * weightedLTV : null;
 
+  // Break-even: minimum enrolled to cover campaign cost
+  const breakEvenInscrits = weightedLTV > 0
+    ? Math.ceil(fullCost / weightedLTV)
+    : null;
+
   return {
     fullCost,
     weightedLTV,
@@ -51,6 +56,7 @@ export function computeFinancials({
     year1Revenue,
     cohortRevenue,
     enrolledCount,
+    breakEvenInscrits,
   };
 }
 

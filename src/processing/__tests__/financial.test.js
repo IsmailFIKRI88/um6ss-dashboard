@@ -79,6 +79,22 @@ describe('computeFinancials', () => {
     expect(result.ltvCacRatio).toBe('30.0');
   });
 
+  it('computes break-even inscrits', () => {
+    const result = computeFinancials({
+      totalSpend: 100000, marketingFixedCosts: 0, monthsActive: 1,
+      enrolledCount: 10, weightedLTV: 50000, avgAnnualFees: 65000,
+    });
+    // fullCost = 100000, breakEven = ceil(100000/50000) = 2
+    expect(result.breakEvenInscrits).toBe(2);
+  });
+
+  it('break-even is null when LTV = 0', () => {
+    const result = computeFinancials({
+      totalSpend: 100000, enrolledCount: 10, weightedLTV: 0,
+    });
+    expect(result.breakEvenInscrits).toBeNull();
+  });
+
   it('computes year1 and cohort revenue', () => {
     const result = computeFinancials({
       totalSpend: 0,

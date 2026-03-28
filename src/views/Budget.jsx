@@ -5,11 +5,13 @@ import { QUALIFIED_SCORE_MIN, DEFAULT_CAMPAIGN_TIMELINE } from '../config/defaul
 import { useTheme } from '../config/ThemeContext';
 import { KPICard, SectionTitle, DataTable, ProgressBar, AlertBadge } from '../components/ui';
 import { CustomTooltip } from '../components/charts';
+import { COLORS } from '../config/theme';
 import { computeFinancials, weightedFinancialParams } from '../processing/financial';
 import { computeBudgetPacing } from '../processing/budgetPacing';
+import { computeMarketSizing, computeScenarios } from '../processing/marketSizing';
 import { fmt } from '../utils/formatters';
 
-export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financialSettings }) {
+export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financialSettings, marketSizingSettings }) {
   const { colors, cardStyle, accentColor, mode } = useTheme();
 
   const totalLeads = leads.length;
@@ -113,6 +115,18 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
   const budgetAlloue = wParams.totalBudgetAlloue > 0 ? wParams.totalBudgetAlloue : pacing.projectedTotalSpend;
   const hasBudgetCap = wParams.totalBudgetAlloue > 0;
 
+  // ── Market sizing for opportunity cost ──
+  const marketSizing = useMemo(() => {
+    if (!marketSizingSettings) return null;
+    return computeMarketSizing(marketSizingSettings, enrolled, wParams.avgAnnualFees, wParams.weightedLTV);
+  }, [marketSizingSettings, enrolled, wParams]);
+
+  // ── Budget scenarios ──
+  const scenarios = useMemo(() => {
+    if (!marketSizing || !financials?.fullCAC) return [];
+    return computeScenarios(marketSizing, totalSpend, financials.fullCAC, wParams.weightedLTV, marketSizingSettings);
+  }, [marketSizing, financials, totalSpend, wParams, marketSizingSettings]);
+
   return (
     <div>
       {/* ── KPIs principaux ── */}
@@ -196,6 +210,95 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
               tooltip="Un ratio ≥ 3x est considéré excellent" />
             <KPICard small label="ROAS" value={financials.roas ? `${financials.roas}x` : '—'} color={accentColor} tooltip="Revenue ÷ coût total" />
             <KPICard small label="Payback" value={financials.paybackMonths ? `${financials.paybackMonths} mois` : '—'} color={colors.medium} tooltip="Mois avant que le revenue couvre le CAC" />
+          </div>
+        </>
+      )}
+
+      {/* ── Break-even + Opportunity Cost ── */}
+      {financials && (
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
+          {financials.breakEvenInscrits && (
+            <div style={{ ...cardStyle, flex: '1 1 220px', padding: '16px 20px', borderTop: `3px solid ${enrolled >= financials.breakEvenInscrits ? colors.good : COLORS.warning}` }}>
+              <div style={{ fontSize: 11, color: colors.medium, fontWeight: 600, textTransform: 'uppercase' }}>Seuil de Rentabilité</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: enrolled >= financials.breakEvenInscrits ? colors.good : COLORS.warning, marginTop: 4 }}>
+                {financials.breakEvenInscrits} inscrits
+              </div>
+              <div style={{ fontSize: 11, color: colors.medium }}>
+                {enrolled >= financials.breakEvenInscrits
+                  ? `✅ Atteint (${enrolled} inscrits) — campagne rentable`
+                  : `⚠️ Encore ${financials.breakEvenInscrits - enrolled} inscrits nécessaires`
+                }
+              </div>
+            </div>
+          )}
+          {marketSizing && marketSizing.headroom > 0 && wParams.weightedLTV > 0 && (
+            <div style={{ ...cardStyle, flex: '1 1 220px', padding: '16px 20px', borderTop: `3px dashed ${COLORS.fermi}` }}>
+              <div style={{ fontSize: 11, color: COLORS.fermi, fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                Coût d'opportunité
+                <span style={{ fontSize: 9, background: COLORS.fermiBg, border: `1px solid ${COLORS.fermiBorder}`, borderRadius: 8, padding: '1px 6px' }}>~ MODÈLE</span>
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: colors.dark, marginTop: 4 }}>
+                {fmt.mad(marketSizing.headroom * wParams.weightedLTV)}
+              </div>
+              <div style={{ fontSize: 11, color: colors.medium }}>
+                ~{marketSizing.headroom} places non captées × {fmt.mad(wParams.weightedLTV)} LTV
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Scénarios Budget ── */}
+      {scenarios.length > 0 && (
+        <>
+          <SectionTitle>Scénarios Budget</SectionTitle>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
+            {scenarios.map((s, i) => {
+              const isBase = s.label === 'Base';
+              const borderColor = i === 0 ? colors.medium : i === 1 ? accentColor : colors.good;
+              return (
+                <div key={s.label} style={{
+                  ...cardStyle, flex: '1 1 200px', padding: '16px 20px',
+                  borderTop: `3px solid ${borderColor}`,
+                  opacity: isBase ? 1 : 0.9,
+                }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: borderColor, textTransform: 'uppercase', marginBottom: 8 }}>
+                    {s.label}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
+                    <div>
+                      <span style={{ color: colors.medium }}>Budget : </span>
+                      <strong>{fmt.mad(s.budget)}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: colors.medium }}>Inscrits : </span>
+                      <strong>{s.totalEnrolled}</strong>
+                      {s.enrolledDelta !== 0 && (
+                        <span style={{ color: s.enrolledDelta > 0 ? colors.good : colors.bad, fontSize: 11 }}>
+                          {' '}({s.enrolledDelta > 0 ? '+' : ''}{s.enrolledDelta})
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <span style={{ color: colors.medium }}>Pénétration : </span>
+                      <strong>{s.penetration}%</strong>
+                    </div>
+                    {s.cacMarginal && (
+                      <div>
+                        <span style={{ color: colors.medium }}>CAC marginal : </span>
+                        <strong style={{ color: s.cacMarginal > 30000 ? colors.bad : colors.good }}>{fmt.mad(s.cacMarginal)}</strong>
+                      </div>
+                    )}
+                    {s.roiIncremental && s.enrolledDelta !== 0 && (
+                      <div>
+                        <span style={{ color: colors.medium }}>ROI incr. : </span>
+                        <strong style={{ color: parseInt(s.roiIncremental) > 0 ? colors.good : colors.bad }}>{s.roiIncremental}%</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </>
       )}
