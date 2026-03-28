@@ -1,7 +1,7 @@
 # Analyses des agents — Mars 2026
 
 Ce dossier contient les analyses détaillées produites par les agents spécialisés
-lors de deux sessions de brainstorming multi-agents (18 agents au total).
+lors de quatre sessions de brainstorming multi-agents (23 agents au total).
 
 Ces documents sont des **snapshots** — ils reflètent l'état du projet et du marché
 au moment de leur génération. Les décisions qui en découlent sont implémentées
@@ -47,3 +47,12 @@ dans le code et la documentation. Les points clés sont dans les mémoires
 | [17-visual-auditor.md](17-visual-auditor.md) | Visual Auditor | 3 problèmes critiques (couleurs hardcodées, contraste, a11y), corrections CSS |
 | [18-mobile-responsive.md](18-mobile-responsive.md) | Mobile & Responsive | 0 media queries, simulation 375px, plan useBreakpoint/bottom nav/carrousel |
 | [19-naive-user-test.md](19-naive-user-test.md) | Naive User Test | Score 3/10, 10 frustrations, verdict "outil marketing déguisé en outil académique" |
+
+## Session 4 — Audit Marketing (4 agents)
+
+| Fichier | Agent | Mission |
+|---|---|---|
+| [20-feature-inventory.md](20-feature-inventory.md) | Feature Inventory | 133 fonctionnalités inventoriées (45 op, 75 en attente, 7 non exposées), scoring maturité |
+| [21-marketing-granularity.md](21-marketing-granularity.md) | Marketing Granularity | Score 6.5/10, 4 niveaux drill-down, phantom gap, manques critiques (trends, ROAS, ad set) |
+| [22-marketing-ux.md](22-marketing-ux.md) | Marketing UX | Score 6.5/10, affordance cards, drawer créas, trends non branchés, valeur unique 9/10 |
+| [23-data-integrity.md](23-data-integrity.md) | Data Integrity | 3 bugs critiques (double-comptage includes, first_touch_source, platform_conversions) |
