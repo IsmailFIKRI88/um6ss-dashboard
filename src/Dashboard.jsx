@@ -3,6 +3,7 @@ import { FACULTY_LABELS } from './config/theme';
 import { DEFAULT_API_URL } from './config/api';
 import { DATE_PRESETS } from './config/defaults';
 import { buildDefaultProgramFinancials } from './config/programs';
+import { MARKET_SIZING_DEFAULTS, MARKET_SIZING_STORAGE_KEY } from './config/marketSizing';
 import { ThemeProvider, DesignModePicker, useTheme } from './config/ThemeContext';
 import { useWordPressData } from './data/useWordPressData';
 import { useAdSpendData } from './data/useAdSpendData';
@@ -10,6 +11,7 @@ import { useOutcomesData } from './data/useOutcomesData';
 import { computeDataQuality } from './processing/dataQuality';
 import { Header, Navigation, SettingsPanel, Footer } from './components/layout';
 import FinancialSettingsPanel from './components/FinancialSettingsPanel';
+import MarketSizingPanel from './components/MarketSizingPanel';
 import { LoadingOverlay, ErrorBanner, EmptyState } from './components/ui';
 import { daysAgo, filterByDateRange } from './utils/dateHelpers';
 
@@ -55,6 +57,22 @@ function DashboardInner() {
       return merged;
     } catch { return buildDefaultProgramFinancials(); }
   });
+
+  // ── Market sizing Fermi parameters (separate localStorage key) ──
+  const [marketSizingSettings, setMarketSizingSettings] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(MARKET_SIZING_STORAGE_KEY) || 'null');
+      return saved ? { ...MARKET_SIZING_DEFAULTS, ...saved } : { ...MARKET_SIZING_DEFAULTS };
+    } catch { return { ...MARKET_SIZING_DEFAULTS }; }
+  });
+
+  const updateMarketSizingSettings = useCallback((updater) => {
+    setMarketSizingSettings(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      try { localStorage.setItem(MARKET_SIZING_STORAGE_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
 
   const updateFinancialSettings = useCallback((updater) => {
     setFinancialSettings(prev => {
@@ -132,6 +150,7 @@ function DashboardInner() {
       outcomesExtended: outcomes.data,
       adSpend: filteredAdSpend, adBreakdowns: ads.breakdowns,
       adVideo: ads.video, dateRange, financialSettings,
+      marketSizingSettings,
       dataLayers,
     };
 
@@ -151,6 +170,7 @@ function DashboardInner() {
       <div style={{ padding: 24, maxWidth: 1280, margin: '0 auto' }}>
         <SettingsPanel config={config} setConfig={updateConfig} onRefresh={refresh} lastRefresh={wp.lastRefresh} />
         <FinancialSettingsPanel settings={financialSettings} setSettings={updateFinancialSettings} />
+        <MarketSizingPanel settings={marketSizingSettings} setSettings={updateMarketSizingSettings} />
         {renderView()}
       </div>
       <Footer />

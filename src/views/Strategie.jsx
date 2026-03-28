@@ -9,8 +9,10 @@ import { PROGRAMS_BY_ENTITY, ENTITY_KEY } from '../config/programs';
 import { fmt } from '../utils/formatters';
 import { daysAgo } from '../utils/dateHelpers';
 import { extractEntityCode } from '../utils/extractEntity';
+import { computeMarketSizing, computeSOVMetrics } from '../processing/marketSizing';
+import { MarketFunnel } from '../components/charts/MarketFunnel';
 
-export default function ViewStrategie({ leads, visits, adSpend, outcomes, experiments, dateRange, financialSettings }) {
+export default function ViewStrategie({ leads, visits, adSpend, outcomes, experiments, dateRange, financialSettings, marketSizingSettings }) {
   const { colors, cardStyle, accentColor } = useTheme();
   // ── Core metrics ──
   const totalLeads = leads.length;
@@ -86,6 +88,17 @@ export default function ViewStrategie({ leads, visits, adSpend, outcomes, experi
     }).sort((a, b) => b.leads - a.leads);
   }, [leads, financialSettings]);
 
+  // ── Market Sizing (Fermi) ──
+  const marketSizing = useMemo(() => {
+    if (!marketSizingSettings) return null;
+    return computeMarketSizing(marketSizingSettings, enrolled, wParams.avgAnnualFees, wParams.weightedLTV);
+  }, [marketSizingSettings, enrolled, wParams]);
+
+  const sovMetrics = useMemo(() => {
+    if (!marketSizingSettings || totalSpend <= 0) return null;
+    const currentSOM = marketSizing?.penetrationRate || 0;
+    return computeSOVMetrics(totalSpend, marketSizingSettings.totalMarketSpend, currentSOM);
+  }, [marketSizingSettings, totalSpend, marketSizing]);
 
   return (
     <div>
@@ -135,6 +148,92 @@ export default function ViewStrategie({ leads, visits, adSpend, outcomes, experi
           <div><span style={{ color: colors.medium }}>Jours restants :</span> <strong>{proj.remaining}</strong></div>
         </div>
       </div>
+
+      {/* Potentiel de Marché (Fermi) */}
+      {marketSizing && (
+        <>
+          <SectionTitle>Potentiel de Marché</SectionTitle>
+          <div style={{ marginBottom: 8, fontSize: 11, color: '#6B85A8', lineHeight: 1.5, borderLeft: `3px solid ${accentColor}40`, paddingLeft: 12 }}>
+            Ces estimations reposent sur un modèle Fermi (hypothèses démographiques et marché).
+            Les fourchettes reflètent l'incertitude — configurable dans le panneau "Modèle de Marché".
+          </div>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16 }}>
+            <MarketFunnel tam={marketSizing.tam} sam={marketSizing.sam} som={marketSizing.som} enrolled={enrolled} />
+            <div style={{ flex: '1 1 280px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Penetration */}
+              <div style={{ ...cardStyle, padding: '16px 20px', borderTop: `3px dashed #6B85A8` }}>
+                <div style={{ fontSize: 11, color: '#6B85A8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  Taux de Pénétration SOM
+                  <span style={{ fontSize: 9, background: '#E8EFF7', border: '1px solid #C5D5E8', borderRadius: 8, padding: '1px 6px' }}>~ MODÈLE</span>
+                </div>
+                <div style={{ fontSize: 32, fontWeight: 700, color: marketSizing.penetrationRate >= 80 ? colors.good : marketSizing.penetrationRate >= 50 ? accentColor : COLORS.warning, marginTop: 4 }}>
+                  ~{marketSizing.penetrationRate}%
+                </div>
+                <div style={{ fontSize: 12, color: '#6B85A8', fontFamily: 'monospace' }}>
+                  {marketSizing.penetrationRange.low}% — {marketSizing.penetrationRange.high}%
+                </div>
+                <div style={{ fontSize: 11, color: colors.medium, marginTop: 4 }}>
+                  {enrolled} inscrits / ~{marketSizing.som.base.toLocaleString('fr-FR')} SOM
+                </div>
+              </div>
+
+              {/* Headroom */}
+              <div style={{ ...cardStyle, padding: '16px 20px', borderTop: `3px dashed #6B85A8` }}>
+                <div style={{ fontSize: 11, color: '#6B85A8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Marge de Croissance (Headroom)
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: colors.dark, marginTop: 4 }}>
+                  ~{marketSizing.headroom.toLocaleString('fr-FR')}
+                </div>
+                <div style={{ fontSize: 11, color: colors.medium }}>
+                  étudiants captables avant saturation SOM
+                </div>
+                {marketSizing.headroomLTV && (
+                  <div style={{ fontSize: 12, color: accentColor, fontWeight: 600, marginTop: 4 }}>
+                    ≈ {fmt.mad(marketSizing.headroomLTV)} de LTV potentielle
+                  </div>
+                )}
+              </div>
+
+              {/* SOV/ESOV */}
+              {sovMetrics && (
+                <div style={{ ...cardStyle, padding: '16px 20px', borderTop: `3px dashed ${sovMetrics.isGrowing ? colors.good : COLORS.warning}` }}>
+                  <div style={{ fontSize: 11, color: '#6B85A8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Share of Voice (ESOV)
+                  </div>
+                  <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 13 }}>
+                    <div>
+                      <span style={{ color: colors.medium }}>SOV : </span>
+                      <strong>{sovMetrics.sov}%</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: colors.medium }}>SOM : </span>
+                      <strong>{sovMetrics.som}%</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: colors.medium }}>ESOV : </span>
+                      <strong style={{ color: sovMetrics.isGrowing ? colors.good : COLORS.warning }}>
+                        {sovMetrics.esov > 0 ? '+' : ''}{sovMetrics.esov} pts
+                      </strong>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, color: colors.medium, marginTop: 6 }}>
+                    {sovMetrics.isGrowing
+                      ? `ESOV positif → croissance prédite : +${sovMetrics.predictedGrowthPct}% SOM`
+                      : `ESOV négatif → risque de perte de parts de marché à 18 mois`
+                    }
+                  </div>
+                  {!sovMetrics.calibrated && (
+                    <div style={{ fontSize: 10, color: '#6B85A8', marginTop: 4, fontStyle: 'italic' }}>
+                      Coefficient ESOV non calibré — à valider après 2 saisons
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Remplissage par Entité */}
       <SectionTitle>Remplissage par Entité</SectionTitle>
