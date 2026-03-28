@@ -19,6 +19,7 @@ import ViewStrategie from './views/Strategie';
 import ViewAcquisition from './views/Acquisition';
 import ViewQualiteLeads from './views/QualiteLeads';
 import ViewBudget from './views/Budget';
+import ViewAdmissions from './views/Admissions';
 
 // ═══════════════════════════════════════════════
 // MAIN DASHBOARD
@@ -28,6 +29,7 @@ const ALL_VIEWS = [
   { id: 'strategie', label: 'Stratégie', icon: '⚡' },
   { id: 'acquisition', label: 'Acquisition', icon: '📈' },
   { id: 'qualite-leads', label: 'Qualité Leads', icon: '⭐' },
+  { id: 'admissions', label: 'Admissions', icon: '🎓' },
   { id: 'budget', label: 'Budget', icon: '💰' },
   { id: 'parametres', label: 'Paramètres', icon: '⚙️', isSettings: true },
 ];
@@ -159,6 +161,7 @@ function DashboardInner() {
       case 'strategie': return <ViewStrategie {...viewProps} />;
       case 'acquisition': return <ViewAcquisition {...viewProps} />;
       case 'qualite-leads': return <ViewQualiteLeads {...viewProps} />;
+      case 'admissions': return <ViewAdmissions {...viewProps} />;
       case 'budget': return <ViewBudget {...viewProps} />;
       default: return <ViewStrategie {...viewProps} />;
     }
