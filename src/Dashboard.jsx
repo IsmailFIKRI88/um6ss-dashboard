@@ -6,6 +6,7 @@ import { buildDefaultProgramFinancials } from './config/programs';
 import { ThemeProvider, DesignModePicker, useTheme } from './config/ThemeContext';
 import { useWordPressData } from './data/useWordPressData';
 import { useAdSpendData } from './data/useAdSpendData';
+import { useOutcomesData } from './data/useOutcomesData';
 import { computeDataQuality } from './processing/dataQuality';
 import { Header, Navigation, SettingsPanel, Footer } from './components/layout';
 import FinancialSettingsPanel from './components/FinancialSettingsPanel';
@@ -41,10 +42,17 @@ function DashboardInner() {
   });
 
   // ── Financial settings per faculty (persisted in localStorage) ──
+  // Deep merge: preserves user-entered values while adding new fields from defaults
   const [financialSettings, setFinancialSettings] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('um6ss_faculty_financials') || 'null');
-      return saved || buildDefaultProgramFinancials();
+      if (!saved) return buildDefaultProgramFinancials();
+      const defaults = buildDefaultProgramFinancials();
+      const merged = {};
+      for (const key of Object.keys(defaults)) {
+        merged[key] = { ...defaults[key], ...(saved[key] || {}) };
+      }
+      return merged;
     } catch { return buildDefaultProgramFinancials(); }
   });
 
@@ -66,11 +74,13 @@ function DashboardInner() {
 
   const wp = useWordPressData(config.wpApiKey, config.wpBaseUrl);
   const ads = useAdSpendData(config.wpApiKey, config.wpBaseUrl);
+  const outcomes = useOutcomesData(config.wpApiKey, config.wpBaseUrl);
 
   const refresh = useCallback(() => {
     wp.refresh();
     ads.refresh();
-  }, [wp.refresh, ads.refresh]);
+    outcomes.refresh();
+  }, [wp.refresh, ads.refresh, outcomes.refresh]);
 
   const dateRange = useMemo(() => {
     const preset = DATE_PRESETS.find(p => p.key === datePreset);
@@ -98,6 +108,14 @@ function DashboardInner() {
 
   const dataQuality = useMemo(() => computeDataQuality(filteredLeads), [filteredLeads]);
 
+  const dataLayers = useMemo(() => ({
+    leads: wp.leads.length > 0,
+    ads: ads.available,
+    outcomes: outcomes.available,
+    outcomesSource: outcomes.source,
+    financialRef: Object.values(financialSettings).some(s => s.annualFees > 0),
+  }), [wp.leads.length, ads.available, outcomes.available, outcomes.source, financialSettings]);
+
   const visibleViews = ALL_VIEWS;
 
   const safeActiveView = visibleViews.find(v => v.id === activeView) ? activeView : 'strategie';
@@ -111,8 +129,10 @@ function DashboardInner() {
     const viewProps = {
       leads: filteredLeads, visits: wp.visits, abandons: wp.abandons,
       outcomes: wp.outcomes, experiments: wp.experiments,
+      outcomesExtended: outcomes.data,
       adSpend: filteredAdSpend, adBreakdowns: ads.breakdowns,
       adVideo: ads.video, dateRange, financialSettings,
+      dataLayers,
     };
 
     switch (safeActiveView) {

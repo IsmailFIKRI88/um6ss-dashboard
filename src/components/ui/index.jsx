@@ -198,6 +198,8 @@ export const CampaignProgressBar = ({ start, end }) => {
   );
 };
 
+export { ConditionalSection } from './ConditionalSection';
+
 export const ConfidenceScore = ({ level }) => {
   const config = {
     ok: { color: COLORS.good, label: 'Données OK', bg: 'rgba(42,160,55,0.15)' },

@@ -29,7 +29,7 @@ describe('PROGRAMS catalog', () => {
 });
 
 describe('buildDefaultProgramFinancials', () => {
-  it('generates defaults for all programs', () => {
+  it('generates defaults for all programs with Phase C fields', () => {
     const defaults = buildDefaultProgramFinancials();
     PROGRAMS.forEach(p => {
       expect(defaults).toHaveProperty(p.id);
@@ -37,16 +37,21 @@ describe('buildDefaultProgramFinancials', () => {
       expect(defaults[p.id]).toHaveProperty('programYears');
       expect(defaults[p.id]).toHaveProperty('retentionY1');
       expect(defaults[p.id]).toHaveProperty('maxCapacity');
+      // Phase C fields initialized at 0
+      expect(defaults[p.id].trainingCostPerYear).toBe(0);
+      expect(defaults[p.id].noShowRate).toBe(0);
+      expect(defaults[p.id].scholarshipRate).toBe(0);
     });
   });
 
-  it('generates entity-level defaults', () => {
+  it('generates entity-level defaults with Phase C fields', () => {
     const defaults = buildDefaultProgramFinancials();
     Object.keys(PROGRAMS_BY_ENTITY).forEach(entity => {
       const key = `_entity_${entity}`;
       expect(defaults).toHaveProperty(key);
       expect(defaults[key]).toHaveProperty('budgetAlloue');
       expect(defaults[key]).toHaveProperty('marketingFixedCosts');
+      expect(defaults[key].admissionsCosts).toBe(0);
     });
   });
 

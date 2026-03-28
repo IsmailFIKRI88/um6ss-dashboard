@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "source": "static-sample",
+    "generated": "2026-03-27",
+    "version": "1.0",
+    "description": "Données agrégées exemple scolarité — Pas de données réelles."
+  },
+  "academic_year": "2025-2026",
+  "retention_by_cohort": [
+    { "cohort": 2020, "enrolled_y1": 245, "retained_y2": 216, "retention_y1_pct": 88.2 },
+    { "cohort": 2021, "enrolled_y1": 278, "retained_y2": 248, "retention_y1_pct": 89.2 },
+    { "cohort": 2022, "enrolled_y1": 301, "retained_y2": 271, "retention_y1_pct": 90.0 },
+    { "cohort": 2023, "enrolled_y1": 318, "retained_y2": 289, "retention_y1_pct": 90.9 },
+    { "cohort": 2024, "enrolled_y1": 342, "retained_y2": 312, "retention_y1_pct": 91.2 }
+  ],
+  "satisfaction_nps": {
+    "score": 32,
+    "promoters_pct": 45,
+    "passives_pct": 40,
+    "detractors_pct": 15,
+    "responses": 487
+  }
+}

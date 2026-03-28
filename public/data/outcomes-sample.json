@@ -1,0 +1,26 @@
+{
+  "_meta": {
+    "source": "static-sample",
+    "generated": "2026-03-27",
+    "version": "1.0",
+    "description": "Données agrégées exemple — Pas de données réelles. Pour la démo uniquement."
+  },
+  "by_faculty": [
+    { "faculty_code": "FM6SIPS", "faculty_label": "Sciences Infirmières", "leads": 420, "qualified": 168, "contacted": 92, "pending": 328 },
+    { "faculty_code": "ESM6ISS", "faculty_label": "Ingénieurs Santé", "leads": 210, "qualified": 84, "contacted": 45, "pending": 165 },
+    { "faculty_code": "FM6M", "faculty_label": "Médecine", "leads": 180, "qualified": 72, "contacted": 38, "pending": 142 },
+    { "faculty_code": "FM6MD", "faculty_label": "Médecine Dentaire", "leads": 130, "qualified": 52, "contacted": 28, "pending": 102 },
+    { "faculty_code": "FM6P", "faculty_label": "Pharmacie", "leads": 120, "qualified": 48, "contacted": 25, "pending": 95 },
+    { "faculty_code": "FM6MV", "faculty_label": "Médecine Vétérinaire", "leads": 45, "qualified": 18, "contacted": 10, "pending": 35 },
+    { "faculty_code": "FM6M-EN", "faculty_label": "Medicine (English)", "leads": 35, "qualified": 14, "contacted": 8, "pending": 27 },
+    { "faculty_code": "EIMSP", "faculty_label": "Management Santé", "leads": 60, "qualified": 24, "contacted": 12, "pending": 48 },
+    { "faculty_code": "ISMBB", "faculty_label": "Biotechnologie", "leads": 40, "qualified": 16, "contacted": 9, "pending": 31 }
+  ],
+  "by_channel": [
+    { "channel": "Paid Social", "leads": 550, "qualified": 220 },
+    { "channel": "Paid Search", "leads": 310, "qualified": 155 },
+    { "channel": "Organic", "leads": 180, "qualified": 90 },
+    { "channel": "Direct", "leads": 120, "qualified": 48 },
+    { "channel": "Referral", "leads": 80, "qualified": 40 }
+  ]
+}

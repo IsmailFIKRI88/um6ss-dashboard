@@ -4,3 +4,10 @@ dist/
 *.local
 .env
 .env.*
+
+# Real data — NEVER commit
+public/data/real/
+public/data/prod/
+*.students.csv
+*.leads.export.csv
+*.outcomes.csv

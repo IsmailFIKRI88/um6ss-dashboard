@@ -22,9 +22,9 @@ export function computeFinancials({
 
   const fullCAC = enrolledCount > 0 ? Math.round(fullCost / enrolledCount) : null;
   const mediaCPL = enrolledCount > 0 ? Math.round(totalSpend / enrolledCount) : null;
-  const ltvCacRatio = fullCAC > 0 ? (weightedLTV / fullCAC).toFixed(1) : null;
+  const ltvCacRatio = fullCAC > 0 && weightedLTV > 0 ? (weightedLTV / fullCAC).toFixed(1) : null;
 
-  const roas = fullCost > 0 && enrolledCount > 0
+  const roas = fullCost > 0 && enrolledCount > 0 && weightedLTV > 0
     ? ((enrolledCount * weightedLTV) / fullCost).toFixed(1) : null;
 
   // Payback: months until revenue covers CAC (based on annual fees, not LTV)
@@ -32,13 +32,13 @@ export function computeFinancials({
   const paybackMonths = fullCAC > 0 && monthlyRevPerStudent > 0
     ? Math.ceil(fullCAC / monthlyRevPerStudent) : null;
 
-  // Year-1 revenue per student
-  const year1Revenue = enrolledCount > 0
+  // Year-1 revenue per student (null if fees not configured)
+  const year1Revenue = enrolledCount > 0 && (avgAnnualFees > 0 || registrationFees > 0)
     ? enrolledCount * (registrationFees + avgAnnualFees)
-    : 0;
+    : null;
 
-  // Cohort lifetime revenue
-  const cohortRevenue = enrolledCount * weightedLTV;
+  // Cohort lifetime revenue (null if LTV not configured)
+  const cohortRevenue = weightedLTV > 0 ? enrolledCount * weightedLTV : null;
 
   return {
     fullCost,

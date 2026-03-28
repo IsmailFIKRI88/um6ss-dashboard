@@ -9,6 +9,18 @@ describe('computeFinancials', () => {
     expect(result.mediaCPL).toBeNull();
     expect(result.roas).toBeNull();
     expect(result.paybackMonths).toBeNull();
+    expect(result.year1Revenue).toBeNull();
+  });
+
+  it('returns null ROAS when LTV is 0 (financialRef not configured)', () => {
+    const result = computeFinancials({
+      totalSpend: 50000, enrolledCount: 10, weightedLTV: 0, avgAnnualFees: 0,
+    });
+    expect(result.fullCAC).toBe(5000); // CAC still works
+    expect(result.roas).toBeNull();     // ROAS needs LTV
+    expect(result.ltvCacRatio).toBeNull();
+    expect(result.cohortRevenue).toBeNull();
+    expect(result.year1Revenue).toBeNull();
   });
 
   it('computes CAC correctly', () => {

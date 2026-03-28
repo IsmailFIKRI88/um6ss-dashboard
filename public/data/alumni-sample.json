@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "source": "static-sample",
+    "generated": "2026-03-27",
+    "version": "1.0",
+    "description": "Données agrégées exemple alumni — Pas de données réelles."
+  },
+  "summary": {
+    "total_alumni": 1847,
+    "cohorts_tracked": 6,
+    "employment_rate_6m_pct": 78.4,
+    "avg_time_to_employment_months": 3.2
+  },
+  "by_cohort": [
+    { "year": 2020, "graduates": 241, "employed_6m_pct": 79.2 },
+    { "year": 2021, "graduates": 278, "employed_6m_pct": 81.0 },
+    { "year": 2022, "graduates": 301, "employed_6m_pct": 83.4 },
+    { "year": 2023, "graduates": 318, "employed_6m_pct": 85.2 },
+    { "year": 2024, "graduates": 342, "employed_6m_pct": 86.1 },
+    { "year": 2025, "graduates": 367, "employed_6m_pct": null, "note": "Promotion en cours de suivi" }
+  ],
+  "by_faculty": [
+    { "faculty_code": "FM6M", "total_alumni": 487, "employment_rate_pct": 91.2 },
+    { "faculty_code": "FM6SIPS", "total_alumni": 412, "employment_rate_pct": 88.4 },
+    { "faculty_code": "FM6P", "total_alumni": 298, "employment_rate_pct": 86.7 },
+    { "faculty_code": "FM6MD", "total_alumni": 267, "employment_rate_pct": 82.4 },
+    { "faculty_code": "FM6MV", "total_alumni": 221, "employment_rate_pct": 80.1 },
+    { "faculty_code": "ESM6ISS", "total_alumni": 162, "employment_rate_pct": 77.8 }
+  ]
+}

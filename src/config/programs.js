@@ -101,6 +101,9 @@ export function buildDefaultProgramFinancials() {
       retentionOngoing: cd.retentionOngoing || 97,
       maxCapacity: 0,
       enrollmentTarget: 0,
+      trainingCostPerYear: 0,
+      noShowRate: 0,
+      scholarshipRate: 0,
     };
   }
   // Entity-level defaults
@@ -108,6 +111,7 @@ export function buildDefaultProgramFinancials() {
     defaults[ENTITY_KEY(entity)] = {
       budgetAlloue: 0,
       marketingFixedCosts: 0,
+      admissionsCosts: 0,
     };
   }
   return defaults;
