@@ -5,6 +5,10 @@ dist/
 .env
 .env.*
 
+# Claude Code config
+.claude/
+settings.json
+
 # Real data — NEVER commit
 public/data/real/
 public/data/prod/

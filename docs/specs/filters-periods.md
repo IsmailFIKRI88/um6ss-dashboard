@@ -1,3 +1,5 @@
+> **Note (mars 2026)** : Vision V2. Le code actuel implémente 2 filtres sur 6 (Entité + Période).
+
 # Filtres & Périodes
 
 ## Dimensions transverses

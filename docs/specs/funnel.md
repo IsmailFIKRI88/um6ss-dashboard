@@ -1,3 +1,6 @@
+> **Note (mars 2026)** : Vision V2. Le code actuel implémente un funnel 8 étapes marketing.
+> L'extension à 9 étapes admissions est prévue en Phase B.
+
 # Funnel Admissions — 9 étapes
 
 ## Étapes

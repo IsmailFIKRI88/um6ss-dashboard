@@ -1,3 +1,5 @@
+// LEGACY — Contenu à migrer dans views/Admissions.jsx (Phase B). Ne pas modifier.
+// Conservé pour : heatmap programmes (lignes 108-134), drill-down programme (lignes 137-194).
 import React, { useMemo, useState } from 'react';
 import { COLORS, FACULTY_LABELS, FACULTY_COLORS } from '../config/theme';
 import { QUALIFIED_SCORE_MIN } from '../config/defaults';

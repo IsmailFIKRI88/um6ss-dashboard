@@ -1,3 +1,5 @@
+> **Note (mars 2026)** : Vision V2. Le code actuel supporte 10 canaux. Les 4 restants sont planifiés.
+
 # Canaux d'Acquisition — 14 canaux
 
 | # | Canal | Code `channel_group` | Couleur | Source données | Statut |

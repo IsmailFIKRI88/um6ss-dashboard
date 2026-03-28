@@ -9,6 +9,8 @@ Dashboard React/Vite de pilotage campagne acquisition UM6SS 2026-2027.
 npm run dev        # Dev server (localhost:5173)
 npm run build      # Production build → dist/
 npm run preview    # Preview production build
+npm test           # Run unit tests (Vitest, 105 tests)
+npm test:watch     # Watch mode — relance à chaque sauvegarde
 ```
 
 Déployé automatiquement via GitHub Actions → GitHub Pages sur push `main`.
@@ -27,10 +29,13 @@ src/
 ├── config/
 │   ├── api.js             ← Endpoints REST + timeout
 │   ├── defaults.js        ← Seuils alertes, benchmarks, timeline campagne
-│   └── theme.js           ← Couleurs, labels entités/canaux, SCORE_LABELS
+│   ├── theme.js           ← Couleurs, labels entités/canaux, SCORE_LABELS
+│   └── marketSizing.js    ← Defaults Fermi TAM/SAM/SOM
 ├── data/
 │   ├── useWordPressData.js ← Hook : leads, visits, abandons, outcomes, experiments
-│   └── useAdSpendData.js   ← Hook : spend, breakdowns, video, schema
+│   ├── useAdSpendData.js   ← Hook : spend, breakdowns, video, schema
+│   ├── useOutcomesData.js  ← Hook : outcomes étendu (live + fallback JSON statique)
+│   └── useStaticData.js    ← Hook générique : fichiers JSON public/data/
 ├── processing/            ← Modules de calcul purs (pas de React)
 │   ├── funnel.js          ← Funnel visite → lead → qualifié → inscrit
 │   ├── financial.js       ← LTV, CAC, ROAS, payback
@@ -42,7 +47,7 @@ src/
 │   ├── formDiagnostics.js ← Waterfall friction, device gap
 │   ├── cohortAnalysis.js  ← Cohortes hebdomadaires
 │   ├── dataQuality.js     ← 3 niveaux (ok/warning/error), pas de score
-│   └── reconciliation.js  ← Click IDs + utm_campaign matching
+│   └── marketSizing.js    ← TAM/SAM/SOM Fermi, SOV/ESOV, scénarios budget
 ├── views/                 ← 4 vues, une par rôle décideur
 │   ├── Strategie.jsx      ← Direction générale : objectifs, alertes, résumé IA
 │   ├── Acquisition.jsx    ← Marketing/Growth : CPL drill-down, créas, pacing
@@ -50,7 +55,10 @@ src/
 │   └── Budget.jsx         ← Finance : spend vs budget, coût/inscrit, P&L
 ├── components/
 │   ├── ui/index.jsx       ← KPICard, AlertBadge, SectionTitle, DataTable, ProgressBar
+│   ├── ui/ConditionalSection.jsx ← Wrapper données disponibles/indisponibles
 │   ├── charts/index.jsx   ← CustomTooltip, FunnelBar
+│   ├── charts/MarketFunnel.jsx   ← Funnel visuel TAM→SAM→SOM→Inscrits
+│   ├── MarketSizingPanel.jsx     ← Config Fermi TAM/SAM/SOM
 │   └── layout/index.jsx   ← Header, Navigation, SettingsPanel, Footer
 └── utils/
     ├── formatters.js      ← fmt.mad(), fmt.number(), fmt.pct(), fmt.dateShort()
@@ -139,9 +147,31 @@ La vue Acquisition doit permettre de descendre du coût global jusqu'à la créa
 - Styles : inline avec `COLORS` de theme.js — pas de CSS externe
 - Exports : named exports pour les utils/processing, default export pour les vues
 - Imports : `../` depuis views (un seul niveau), jamais `../../`
-- Pas de localStorage — utiliser React state (sessionStorage pour la config API uniquement)
+- localStorage pour la configuration métier persistante (financialSettings, marketSizingSettings). sessionStorage pour la config API (URL, clé). React state pour tout le reste.
+
+## dataLayers — Activation conditionnelle
+
+Dashboard.jsx expose un objet `dataLayers` passé à toutes les vues :
+- `leads` : données WordPress chargées
+- `ads` : données publicitaires disponibles
+- `outcomes` : outcomes DSI importés (source: 'live' ou 'static')
+- `financialRef` : frais de scolarité configurés dans le panel financier
+
+Les KPIs financiers (ROAS, cohortRevenue, year1Revenue) retournent `null` — jamais `0` —
+quand les données sources sont manquantes. Cela permet aux vues de distinguer "pas de données"
+de "résultat calculé = zéro".
+
+## Modèle Fermi — TAM/SAM/SOM
+
+Le dashboard intègre un modèle de dimensionnement marché (Fermi estimation) :
+- Config dans `src/config/marketSizing.js`, persistée dans localStorage séparé
+- Processing dans `src/processing/marketSizing.js` (fonctions pures)
+- Visualisation dans la vue Stratégie (funnel + pénétration + SOV/ESOV)
+- Chaque paramètre a 3 valeurs : pessimiste/base/optimiste (propagation d'incertitude)
+- Les estimations Fermi utilisent un style visuel distinct des faits mesurés (bordure dashed, badge "~ MODÈLE")
 
 ## Référence
 
 - README.md : changelog, limites des données, architecture détaillée
 - Thème lp-template : @docs/DATA_DICTIONARY.md pour le schéma complet des leads
+- docs/ARCHITECTURE.md : décisions architecturales, cartographie concurrentielle, modèle Fermi

@@ -1,3 +1,7 @@
+> **Note (mars 2026)** : Ce document décrit la vision V2 initiale. Le code actuel implémente 4 vues
+> (Stratégie, Acquisition, Qualité Leads, Budget) avec des noms et un contenu différent.
+> Voir `docs/ARCHITECTURE.md` section 7 pour le plan d'implémentation réel (phases A→E).
+
 # Vues — Specs détaillées
 
 ## Vue 1 : Stratégie (CODIR)
