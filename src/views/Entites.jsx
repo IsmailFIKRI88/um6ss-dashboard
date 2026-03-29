@@ -19,7 +19,7 @@ export default function ViewEntites({ leads, adSpend, experiments, dateRange }) 
       if (!byFac[code]) byFac[code] = { leads: 0, qualified: 0, enrolled: 0, scores: [], programmes: new Set() };
       byFac[code].leads++;
       if (Number(l.score) >= QUALIFIED_SCORE_MIN) byFac[code].qualified++;
-      if (isEnrolled(l.outcome)) byFac[code].enrolled++;
+      if (isEnrolled(l)) byFac[code].enrolled++;
       byFac[code].scores.push(Number(l.score) || 0);
       if (l.programme_label) byFac[code].programmes.add(l.programme_label);
     });
@@ -41,7 +41,7 @@ export default function ViewEntites({ leads, adSpend, experiments, dateRange }) 
       if (!byProg[prog]) byProg[prog] = { entity, leads: 0, qualified: 0, enrolled: 0, scores: [], campus: new Set() };
       byProg[prog].leads++;
       if (Number(l.score) >= QUALIFIED_SCORE_MIN) byProg[prog].qualified++;
-      if (isEnrolled(l.outcome)) byProg[prog].enrolled++;
+      if (isEnrolled(l)) byProg[prog].enrolled++;
       byProg[prog].scores.push(Number(l.score) || 0);
       if (l.campus_label) byProg[prog].campus.add(l.campus_label);
     });
@@ -147,7 +147,7 @@ export default function ViewEntites({ leads, adSpend, experiments, dateRange }) 
           if (!byCampus[c]) byCampus[c] = { leads: 0, qualified: 0, enrolled: 0 };
           byCampus[c].leads++;
           if (Number(l.score) >= QUALIFIED_SCORE_MIN) byCampus[c].qualified++;
-          if (isEnrolled(l.outcome)) byCampus[c].enrolled++;
+          if (isEnrolled(l)) byCampus[c].enrolled++;
         });
 
         const progExps = activeExperiments.filter(e =>

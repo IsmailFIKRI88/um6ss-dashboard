@@ -18,8 +18,8 @@ import { isEnrolled, isContacted, isPending } from '../config/outcomeMapping';
 export function computeAdmissionFunnel(leads, financialSettings = {}) {
   const total = leads.length;
   const qualified = leads.filter(l => Number(l.score) >= QUALIFIED_SCORE_MIN).length;
-  const contacted = leads.filter(l => isContacted(l.outcome)).length;
-  const enrolled = leads.filter(l => isEnrolled(l.outcome)).length;
+  const contacted = leads.filter(l => isContacted(l)).length;
+  const enrolled = leads.filter(l => isEnrolled(l)).length;
 
   const yieldRate = contacted > 0 ? Math.round(enrolled / contacted * 100) : null;
   const conversionRate = total > 0 ? Math.round(enrolled / total * 1000) / 10 : 0;
@@ -31,7 +31,7 @@ export function computeAdmissionFunnel(leads, financialSettings = {}) {
     conversionRate,
     contactRate,
     pendingHot: leads.filter(l =>
-      Number(l.score) >= 70 && isPending(l.outcome)
+      Number(l.score) >= 70 && isPending(l)
     ).length,
   };
 }
@@ -54,8 +54,8 @@ export function computeAdmissionsByEntity(leads, financialSettings = {}) {
     };
     byEntity[code].total++;
     if (Number(l.score) >= QUALIFIED_SCORE_MIN) byEntity[code].qualified++;
-    if (isContacted(l.outcome)) byEntity[code].contacted++;
-    if (isEnrolled(l.outcome)) byEntity[code].enrolled++;
+    if (isContacted(l)) byEntity[code].contacted++;
+    if (isEnrolled(l)) byEntity[code].enrolled++;
     byEntity[code].scores.push(Number(l.score) || 0);
   });
 
@@ -103,8 +103,8 @@ export function computeAdmissionsByProgramme(leads, financialSettings = {}) {
     };
     byProg[prog].total++;
     if (Number(l.score) >= QUALIFIED_SCORE_MIN) byProg[prog].qualified++;
-    if (isContacted(l.outcome)) byProg[prog].contacted++;
-    if (isEnrolled(l.outcome)) byProg[prog].enrolled++;
+    if (isContacted(l)) byProg[prog].contacted++;
+    if (isEnrolled(l)) byProg[prog].enrolled++;
     byProg[prog].scores.push(Number(l.score) || 0);
     if (l.campus_label) byProg[prog].campus.add(l.campus_label);
   });

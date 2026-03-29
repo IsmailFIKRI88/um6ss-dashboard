@@ -13,9 +13,9 @@ export function buildFunnel(leads, visits, adSpend, outcomes) {
   const formStarts = leads.filter(l => Number(l.form_started) === 1).length || Math.round(leads.length * 1.3);
   const totalLeads = leads.length;
   const qualified = leads.filter(l => Number(l.score) >= QUALIFIED_SCORE_MIN).length;
-  const contacted = leads.filter(l => isContacted(l.outcome)).length
+  const contacted = leads.filter(l => isContacted(l)).length
     || outcomes?.filter?.(o => isContacted(o.outcome))?.length || 0;
-  const enrolled = leads.filter(l => isEnrolled(l.outcome)).length
+  const enrolled = leads.filter(l => isEnrolled(l)).length
     || outcomes?.filter?.(o => isEnrolled(o.outcome))?.length || 0;
 
   return [

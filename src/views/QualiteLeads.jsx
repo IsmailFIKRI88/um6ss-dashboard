@@ -14,7 +14,7 @@ export default function ViewQualiteLeads({ leads, adSpend, abandons, outcomes, d
   const { colors, cardStyle, accentColor, mode } = useTheme();
   const [showWaterfall, setShowWaterfall] = useState(false);
   const totalLeads = leads.length;
-  const enrolled = leads.filter(l => isEnrolled(l.outcome)).length;
+  const enrolled = leads.filter(l => isEnrolled(l)).length;
   const totalSpend = adSpend.reduce((s, r) => s + (r.spend || 0), 0);
 
   // ── Form diagnostics ──
@@ -23,14 +23,14 @@ export default function ViewQualiteLeads({ leads, adSpend, abandons, outcomes, d
   // ── Contact delay ──
   const contactDelay = useMemo(() => {
     const delays = leads
-      .filter(l => l.outcome_updated_at && l.created_at && !isPending(l.outcome))
+      .filter(l => l.outcome_updated_at && l.created_at && !isPending(l))
       .map(l => Math.round((new Date(l.outcome_updated_at) - new Date(l.created_at)) / 3600000));
     return delays.length > 0 ? Math.round(delays.reduce((a, b) => a + b, 0) / delays.length) : null;
   }, [leads]);
 
   // ── Hot leads ──
   const hotNotContactedCount = useMemo(() =>
-    leads.filter(l => Number(l.score) >= 70 && isPending(l.outcome)).length
+    leads.filter(l => Number(l.score) >= 70 && isPending(l)).length
   , [leads]);
 
   // ── Device gap alert ──
@@ -74,7 +74,7 @@ export default function ViewQualiteLeads({ leads, adSpend, abandons, outcomes, d
       byChannel[key].count++;
       byChannel[key].scores.push(Number(l.score) || 0);
       if (Number(l.score) >= QUALIFIED_SCORE_MIN) byChannel[key].qualified++;
-      if (isEnrolled(l.outcome)) byChannel[key].enrolled++;
+      if (isEnrolled(l)) byChannel[key].enrolled++;
     });
     return Object.values(byChannel).map(ch => ({
       ...ch,
@@ -120,7 +120,7 @@ export default function ViewQualiteLeads({ leads, adSpend, abandons, outcomes, d
       const code = extractEntityCode(l);
       if (!byEntity[code]) byEntity[code] = { code, leads: 0, enrolled: 0, scores: [] };
       byEntity[code].leads++;
-      if (isEnrolled(l.outcome)) byEntity[code].enrolled++;
+      if (isEnrolled(l)) byEntity[code].enrolled++;
       byEntity[code].scores.push(Number(l.score) || 0);
     });
     return Object.values(byEntity).map(e => ({
@@ -139,7 +139,7 @@ export default function ViewQualiteLeads({ leads, adSpend, abandons, outcomes, d
       const prog = l.programme_label || l.programme_id || 'Non spécifié';
       if (!byProg[prog]) byProg[prog] = { programme: prog, leads: 0, enrolled: 0 };
       byProg[prog].leads++;
-      if (isEnrolled(l.outcome)) byProg[prog].enrolled++;
+      if (isEnrolled(l)) byProg[prog].enrolled++;
     });
     return Object.values(byProg).map(p => ({
       ...p,

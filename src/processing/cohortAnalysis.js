@@ -23,8 +23,8 @@ export function computeCohorts(leads) {
 
     cohorts[weekKey].total++;
 
-    if (isContacted(lead.outcome) && !isEnrolled(lead.outcome)) cohorts[weekKey].contacted++;
-    if (isEnrolled(lead.outcome)) {
+    if (isContacted(lead) && !isEnrolled(lead)) cohorts[weekKey].contacted++;
+    if (isEnrolled(lead)) {
       cohorts[weekKey].enrolled++;
       cohorts[weekKey].contacted++; // enrolled implies contacted
     }

@@ -19,7 +19,7 @@ export function computeProjection(leads, adSpend, timeline = DEFAULT_CAMPAIGN_TI
   const projectedLeads = leads.length + Math.round(dailyRate * remaining);
 
   // Conversion rate lead → enrolled (from actual data or flagged as estimate)
-  const enrolled = leads.filter(l => isEnrolled(l.outcome)).length;
+  const enrolled = leads.filter(l => isEnrolled(l)).length;
   const hasRealConvRate = leads.length > 50 && enrolled > 0;
   const convRate = hasRealConvRate ? enrolled / leads.length : null;
   const projectedEnrolled = convRate ? Math.round(projectedLeads * convRate) : null;

@@ -17,7 +17,7 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
 
   const totalLeads = leads.length;
   const qualified = leads.filter(l => Number(l.score) >= QUALIFIED_SCORE_MIN).length;
-  const enrolled = leads.filter(l => isEnrolled(l.outcome)).length;
+  const enrolled = leads.filter(l => isEnrolled(l)).length;
   const hasOutcomes = enrolled > 0;
 
   const pacing = useMemo(() => computeBudgetPacing(adSpend), [adSpend]);
@@ -86,7 +86,7 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
       if (!byChannel[key]) byChannel[key] = { channel: key, spend: 0, impressions: 0, clicks: 0, leads: 0, qualified: 0, enrolled: 0 };
       byChannel[key].leads++;
       if (Number(l.score) >= QUALIFIED_SCORE_MIN) byChannel[key].qualified++;
-      if (isEnrolled(l.outcome)) byChannel[key].enrolled++;
+      if (isEnrolled(l)) byChannel[key].enrolled++;
     });
     return Object.values(byChannel).map(ch => ({
       ...ch,

@@ -47,18 +47,31 @@ export function isUnmappedOutcome(raw) {
   return !OUTCOME_LOOKUP.has(val);
 }
 
-/** Check if a lead is in the "enrolled" group. */
-export function isEnrolled(outcome) {
-  return normalizeOutcome(outcome) === 'enrolled';
+/**
+ * Get the best outcome value from a lead object.
+ * Prefers outcome_normalized (from server) over outcome (raw).
+ * @param {Object} lead
+ * @returns {*}
+ */
+export function getOutcome(lead) {
+  return lead?.outcome_normalized ?? lead?.outcome ?? null;
+}
+
+/** Check if a lead is in the "enrolled" group. Accepts raw value or lead object. */
+export function isEnrolled(outcomeOrLead) {
+  const val = typeof outcomeOrLead === 'object' ? getOutcome(outcomeOrLead) : outcomeOrLead;
+  return normalizeOutcome(val) === 'enrolled';
 }
 
 /** Check if a lead has been contacted (includes enrolled — enrolled implies contacted). */
-export function isContacted(outcome) {
-  const n = normalizeOutcome(outcome);
+export function isContacted(outcomeOrLead) {
+  const val = typeof outcomeOrLead === 'object' ? getOutcome(outcomeOrLead) : outcomeOrLead;
+  const n = normalizeOutcome(val);
   return n === 'contacted' || n === 'enrolled';
 }
 
 /** Check if a lead is still pending (no action taken). */
-export function isPending(outcome) {
-  return normalizeOutcome(outcome) === 'pending';
+export function isPending(outcomeOrLead) {
+  const val = typeof outcomeOrLead === 'object' ? getOutcome(outcomeOrLead) : outcomeOrLead;
+  return normalizeOutcome(val) === 'pending';
 }
