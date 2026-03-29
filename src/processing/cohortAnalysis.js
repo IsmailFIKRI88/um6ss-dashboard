@@ -1,3 +1,5 @@
+import { isEnrolled, isContacted } from '../config/outcomeMapping';
+
 // ═══════════════════════════════════════════════
 // COHORT ANALYSIS — Conversion velocity by cohort
 // ═══════════════════════════════════════════════
@@ -21,9 +23,8 @@ export function computeCohorts(leads) {
 
     cohorts[weekKey].total++;
 
-    const outcome = lead.outcome || 'pending';
-    if (['contacted', 'contacté'].includes(outcome)) cohorts[weekKey].contacted++;
-    if (['enrolled', 'inscrit'].includes(outcome)) {
+    if (isContacted(lead.outcome) && !isEnrolled(lead.outcome)) cohorts[weekKey].contacted++;
+    if (isEnrolled(lead.outcome)) {
       cohorts[weekKey].enrolled++;
       cohorts[weekKey].contacted++; // enrolled implies contacted
     }

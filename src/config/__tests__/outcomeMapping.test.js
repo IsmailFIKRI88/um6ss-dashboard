@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeOutcome, isEnrolled, isContacted, isPending } from '../outcomeMapping';
+import { normalizeOutcome, isEnrolled, isContacted, isPending, isUnmappedOutcome } from '../outcomeMapping';
 
 describe('normalizeOutcome', () => {
   it('normalizes enrolled variants', () => {
@@ -36,12 +36,55 @@ describe('normalizeOutcome', () => {
     expect(normalizeOutcome('waitlisted')).toBe('waitlisted');
   });
 
-  it('defaults to pending for null/undefined/empty/unknown', () => {
+  it('defaults to pending for null/undefined/empty', () => {
     expect(normalizeOutcome(null)).toBe('pending');
     expect(normalizeOutcome(undefined)).toBe('pending');
     expect(normalizeOutcome('')).toBe('pending');
     expect(normalizeOutcome('pending')).toBe('pending');
+  });
+
+  it('defaults to pending for unknown values', () => {
     expect(normalizeOutcome('quelque_chose_inconnu')).toBe('pending');
+    expect(normalizeOutcome('STAT_A01')).toBe('pending');
+  });
+
+  it('handles numeric values (DSI codes)', () => {
+    expect(normalizeOutcome(0)).toBe('pending');
+    expect(normalizeOutcome(1)).toBe('pending');
+    expect(normalizeOutcome('1')).toBe('pending');
+    expect(normalizeOutcome('0')).toBe('pending');
+  });
+
+  it('handles boolean false', () => {
+    expect(normalizeOutcome(false)).toBe('pending');
+  });
+});
+
+describe('isUnmappedOutcome', () => {
+  it('returns false for null/undefined/empty (no value = not unmapped)', () => {
+    expect(isUnmappedOutcome(null)).toBe(false);
+    expect(isUnmappedOutcome(undefined)).toBe(false);
+    expect(isUnmappedOutcome('')).toBe(false);
+  });
+
+  it('returns false for known values', () => {
+    expect(isUnmappedOutcome('enrolled')).toBe(false);
+    expect(isUnmappedOutcome('inscrit')).toBe(false);
+    expect(isUnmappedOutcome('pending')).toBe(false);
+    expect(isUnmappedOutcome('contacté')).toBe(false);
+  });
+
+  it('returns true for unknown DSI values', () => {
+    expect(isUnmappedOutcome('1')).toBe(true);
+    expect(isUnmappedOutcome('STAT_A01')).toBe(true);
+    expect(isUnmappedOutcome('مقبول')).toBe(true);
+    expect(isUnmappedOutcome('quelque_chose')).toBe(true);
+  });
+
+  it('returns true for numeric codes', () => {
+    expect(isUnmappedOutcome(1)).toBe(true);
+    expect(isUnmappedOutcome(0)).toBe(true);
+    expect(isUnmappedOutcome(42)).toBe(true);
   });
 });
 
@@ -67,5 +110,10 @@ describe('helper functions', () => {
     expect(isPending(undefined)).toBe(true);
     expect(isPending('')).toBe(true);
     expect(isPending('enrolled')).toBe(false);
+  });
+
+  it('isPending returns true for unknown values (treated as pending)', () => {
+    expect(isPending('STAT_A01')).toBe(true);
+    expect(isPending(1)).toBe(true);
   });
 });

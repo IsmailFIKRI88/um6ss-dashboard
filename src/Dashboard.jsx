@@ -14,6 +14,7 @@ import FinancialSettingsPanel from './components/FinancialSettingsPanel';
 import MarketSizingPanel from './components/MarketSizingPanel';
 import { LoadingOverlay, ErrorBanner, EmptyState } from './components/ui';
 import { daysAgo, filterByDateRange } from './utils/dateHelpers';
+import { isUnmappedOutcome } from './config/outcomeMapping';
 
 import ViewStrategie from './views/Strategie';
 import ViewAcquisition from './views/Acquisition';
@@ -131,6 +132,18 @@ function DashboardInner() {
 
   const dataQuality = useMemo(() => computeDataQuality(filteredLeads), [filteredLeads]);
 
+  // Detect unmapped outcomes (DSI sent values we don't recognize)
+  const unmappedOutcomes = useMemo(() => {
+    const unknowns = {};
+    wp.leads.forEach(l => {
+      if (isUnmappedOutcome(l.outcome)) {
+        const val = String(l.outcome).toLowerCase().trim();
+        unknowns[val] = (unknowns[val] || 0) + 1;
+      }
+    });
+    return Object.entries(unknowns).map(([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count);
+  }, [wp.leads]);
+
   const dataLayers = useMemo(() => ({
     leads: wp.leads.length > 0,
     ads: ads.available,
@@ -157,6 +170,8 @@ function DashboardInner() {
       adVideo: ads.video, dateRange, financialSettings,
       marketSizingSettings,
       dataLayers,
+      unmappedOutcomes,
+      schema: wp.schema,
     };
 
     switch (safeActiveView) {
@@ -175,6 +190,20 @@ function DashboardInner() {
       <Header leadsCount={wp.leads.length} adsAvailable={ads.available} dataQualityLevel={dataQuality.level} lastRefresh={wp.lastRefresh || ads.lastRefresh} />
       <Navigation views={visibleViews} activeView={safeActiveView} setActiveView={setActiveView} datePreset={datePreset} setDatePreset={setDatePreset} onRefresh={refresh} isLoading={wp.loading} lastRefresh={wp.lastRefresh || ads.lastRefresh} />
       <div style={{ padding: 24, maxWidth: 1280, margin: '0 auto' }}>
+        {/* Alert: unmapped outcomes from DSI */}
+        {unmappedOutcomes.length > 0 && safeActiveView !== 'parametres' && (
+          <div style={{ background: '#FEF3E2', border: `1px solid #E8820C`, borderRadius: 8, padding: '10px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
+            <span style={{ fontSize: 16 }}>⚠️</span>
+            <div style={{ flex: 1 }}>
+              <strong style={{ color: '#E8820C' }}>{unmappedOutcomes.reduce((s, u) => s + u.count, 0)} candidatures avec un statut non reconnu</strong>
+              <div style={{ color: '#4A4A6A', marginTop: 2 }}>
+                Valeurs : {unmappedOutcomes.slice(0, 5).map(u => `"${u.value}" (${u.count})`).join(', ')}
+                {unmappedOutcomes.length > 5 && ` et ${unmappedOutcomes.length - 5} autres`}
+                . Ces candidatures sont traitées comme "en attente". Configurez le mapping dans le plugin WordPress.
+              </div>
+            </div>
+          </div>
+        )}
         {safeActiveView === 'parametres' ? (
           <>
             <SettingsPanel config={config} setConfig={updateConfig} onRefresh={refresh} lastRefresh={wp.lastRefresh} />
