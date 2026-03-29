@@ -10,8 +10,8 @@ export const OUTCOME_GROUPS = {
   enrolled: ['enrolled', 'inscrit', 'payé', 'confirmé', 'inscription_confirmée', 'paid'],
   contacted: ['contacted', 'contacté', 'admis', 'convoqué', 'entretien', 'en_traitement', 'called', 'admitted'],
   refused: ['refusé', 'refused', 'rejeté', 'non_admis', 'rejected'],
-  withdrawn: ['désisté', 'withdrawn', 'annulé', 'no_show', 'cancelled'],
-  waitlisted: ['liste_attente', 'waitlisted', 'en_attente', 'waitlist'],
+  withdrawn: ['désisté', 'withdrawn', 'annulé', 'no_show', 'cancelled', 'abandon'],
+  waitlisted: ['liste_attente', 'liste-attente', 'waitlisted', 'en_attente', 'waitlist'],
   pending: ['pending', 'nouveau', 'new', ''],
 };
 
