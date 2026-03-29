@@ -7,7 +7,6 @@ import { MARKET_SIZING_DEFAULTS, MARKET_SIZING_STORAGE_KEY } from './config/mark
 import { ThemeProvider, DesignModePicker, useTheme } from './config/ThemeContext';
 import { useWordPressData } from './data/useWordPressData';
 import { useAdSpendData } from './data/useAdSpendData';
-import { useOutcomesData } from './data/useOutcomesData';
 import { computeDataQuality } from './processing/dataQuality';
 import { Header, Navigation, SettingsPanel, Footer } from './components/layout';
 import FinancialSettingsPanel from './components/FinancialSettingsPanel';
@@ -98,13 +97,10 @@ function DashboardInner() {
 
   const wp = useWordPressData(config.wpApiKey, config.wpBaseUrl);
   const ads = useAdSpendData(config.wpApiKey, config.wpBaseUrl);
-  const outcomes = useOutcomesData(config.wpApiKey, config.wpBaseUrl);
-
   const refresh = useCallback(() => {
     wp.refresh();
     ads.refresh();
-    outcomes.refresh();
-  }, [wp.refresh, ads.refresh, outcomes.refresh]);
+  }, [wp.refresh, ads.refresh]);
 
   const dateRange = useMemo(() => {
     const preset = DATE_PRESETS.find(p => p.key === datePreset);
@@ -147,10 +143,9 @@ function DashboardInner() {
   const dataLayers = useMemo(() => ({
     leads: wp.leads.length > 0,
     ads: ads.available,
-    outcomes: outcomes.available,
-    outcomesSource: outcomes.source,
+    outcomes: wp.leads.some(l => l.outcome && l.outcome !== 'pending'),
     financialRef: Object.values(financialSettings).some(s => s.annualFees > 0),
-  }), [wp.leads.length, ads.available, outcomes.available, outcomes.source, financialSettings]);
+  }), [wp.leads, ads.available, financialSettings]);
 
   const visibleViews = ALL_VIEWS;
 
@@ -165,7 +160,6 @@ function DashboardInner() {
     const viewProps = {
       leads: filteredLeads, visits: wp.visits, abandons: wp.abandons,
       outcomes: wp.outcomes, experiments: wp.experiments,
-      outcomesExtended: outcomes.data,
       adSpend: filteredAdSpend, adBreakdowns: ads.breakdowns,
       adVideo: ads.video, dateRange, financialSettings,
       marketSizingSettings,
