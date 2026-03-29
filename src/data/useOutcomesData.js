@@ -9,7 +9,7 @@ const STATIC_FALLBACK = 'outcomes-sample.json';
 const FALLBACK_TIMEOUT_MS = 8000;
 
 async function outcomesFetch(baseUrl, apiKey, retries = 2) {
-  const url = `${baseUrl}/outcomes-extended`;
+  const url = `${baseUrl}/outcomes`;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     const res = await fetch(url, {
@@ -50,6 +50,9 @@ export function useOutcomesData(apiKey, baseUrl) {
 
   const fetchData = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
+
+    // Delay to avoid hitting WP rate limit alongside useWordPressData + useAdSpendData
+    await new Promise(r => setTimeout(r, 3000));
 
     // 1. Try live API (with timeout)
     if (apiKey && baseUrl) {

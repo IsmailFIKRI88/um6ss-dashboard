@@ -6,6 +6,7 @@ import { useTheme } from '../config/ThemeContext';
 import { KPICard, SectionTitle, DataTable, ProgressBar, AlertBadge } from '../components/ui';
 import { CustomTooltip } from '../components/charts';
 import { COLORS } from '../config/theme';
+import { isEnrolled } from '../config/outcomeMapping';
 import { computeFinancials, weightedFinancialParams } from '../processing/financial';
 import { computeBudgetPacing } from '../processing/budgetPacing';
 import { computeMarketSizing, computeScenarios } from '../processing/marketSizing';
@@ -16,7 +17,7 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
 
   const totalLeads = leads.length;
   const qualified = leads.filter(l => Number(l.score) >= QUALIFIED_SCORE_MIN).length;
-  const enrolled = leads.filter(l => l.outcome === 'enrolled' || l.outcome === 'inscrit').length;
+  const enrolled = leads.filter(l => isEnrolled(l.outcome)).length;
   const hasOutcomes = enrolled > 0;
 
   const pacing = useMemo(() => computeBudgetPacing(adSpend), [adSpend]);
@@ -85,7 +86,7 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
       if (!byChannel[key]) byChannel[key] = { channel: key, spend: 0, impressions: 0, clicks: 0, leads: 0, qualified: 0, enrolled: 0 };
       byChannel[key].leads++;
       if (Number(l.score) >= QUALIFIED_SCORE_MIN) byChannel[key].qualified++;
-      if (l.outcome === 'enrolled' || l.outcome === 'inscrit') byChannel[key].enrolled++;
+      if (isEnrolled(l.outcome)) byChannel[key].enrolled++;
     });
     return Object.values(byChannel).map(ch => ({
       ...ch,

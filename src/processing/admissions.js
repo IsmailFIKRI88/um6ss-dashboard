@@ -1,6 +1,7 @@
 import { QUALIFIED_SCORE_MIN } from '../config/defaults';
 import { FACULTY_LABELS } from '../config/theme';
 import { PROGRAMS_BY_ENTITY } from '../config/programs';
+import { isEnrolled, isContacted, isPending } from '../config/outcomeMapping';
 
 // ═══════════════════════════════════════════════
 // ADMISSIONS — Pipeline admission + yield rate
@@ -17,11 +18,8 @@ import { PROGRAMS_BY_ENTITY } from '../config/programs';
 export function computeAdmissionFunnel(leads, financialSettings = {}) {
   const total = leads.length;
   const qualified = leads.filter(l => Number(l.score) >= QUALIFIED_SCORE_MIN).length;
-  const contacted = leads.filter(l =>
-    l.outcome === 'contacted' || l.outcome === 'contacté' ||
-    l.outcome === 'enrolled' || l.outcome === 'inscrit'
-  ).length;
-  const enrolled = leads.filter(l => l.outcome === 'enrolled' || l.outcome === 'inscrit').length;
+  const contacted = leads.filter(l => isContacted(l.outcome)).length;
+  const enrolled = leads.filter(l => isEnrolled(l.outcome)).length;
 
   const yieldRate = contacted > 0 ? Math.round(enrolled / contacted * 100) : null;
   const conversionRate = total > 0 ? Math.round(enrolled / total * 1000) / 10 : 0;
@@ -33,7 +31,7 @@ export function computeAdmissionFunnel(leads, financialSettings = {}) {
     conversionRate,
     contactRate,
     pendingHot: leads.filter(l =>
-      Number(l.score) >= 70 && (l.outcome === 'pending' || !l.outcome)
+      Number(l.score) >= 70 && isPending(l.outcome)
     ).length,
   };
 }
@@ -56,8 +54,8 @@ export function computeAdmissionsByEntity(leads, financialSettings = {}) {
     };
     byEntity[code].total++;
     if (Number(l.score) >= QUALIFIED_SCORE_MIN) byEntity[code].qualified++;
-    if (['contacted', 'contacté', 'enrolled', 'inscrit'].includes(l.outcome)) byEntity[code].contacted++;
-    if (l.outcome === 'enrolled' || l.outcome === 'inscrit') byEntity[code].enrolled++;
+    if (isContacted(l.outcome)) byEntity[code].contacted++;
+    if (isEnrolled(l.outcome)) byEntity[code].enrolled++;
     byEntity[code].scores.push(Number(l.score) || 0);
   });
 
@@ -105,8 +103,8 @@ export function computeAdmissionsByProgramme(leads, financialSettings = {}) {
     };
     byProg[prog].total++;
     if (Number(l.score) >= QUALIFIED_SCORE_MIN) byProg[prog].qualified++;
-    if (['contacted', 'contacté', 'enrolled', 'inscrit'].includes(l.outcome)) byProg[prog].contacted++;
-    if (l.outcome === 'enrolled' || l.outcome === 'inscrit') byProg[prog].enrolled++;
+    if (isContacted(l.outcome)) byProg[prog].contacted++;
+    if (isEnrolled(l.outcome)) byProg[prog].enrolled++;
     byProg[prog].scores.push(Number(l.score) || 0);
     if (l.campus_label) byProg[prog].campus.add(l.campus_label);
   });

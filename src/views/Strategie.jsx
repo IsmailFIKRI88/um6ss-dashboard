@@ -9,6 +9,7 @@ import { PROGRAMS_BY_ENTITY, ENTITY_KEY } from '../config/programs';
 import { fmt } from '../utils/formatters';
 import { daysAgo } from '../utils/dateHelpers';
 import { extractEntityCode } from '../utils/extractEntity';
+import { isEnrolled } from '../config/outcomeMapping';
 import { computeMarketSizing, computeSOVMetrics } from '../processing/marketSizing';
 import { MarketFunnel } from '../components/charts/MarketFunnel';
 import { buildFunnel } from '../processing/funnel';
@@ -18,7 +19,7 @@ export default function ViewStrategie({ leads, visits, adSpend, outcomes, experi
   // ── Core metrics ──
   const totalLeads = leads.length;
   const qualified = leads.filter(l => Number(l.score) >= QUALIFIED_SCORE_MIN).length;
-  const enrolled = leads.filter(l => l.outcome === 'enrolled' || l.outcome === 'inscrit').length;
+  const enrolled = leads.filter(l => isEnrolled(l.outcome)).length;
   const totalSpend = adSpend.reduce((s, r) => s + (r.spend || 0), 0);
   const coutParInscrit = enrolled > 0 && totalSpend > 0 ? Math.round(totalSpend / enrolled) : null;
 
@@ -71,7 +72,7 @@ export default function ViewStrategie({ leads, visits, adSpend, outcomes, experi
       if (!byFac[code]) byFac[code] = { leads: 0, qualified: 0, enrolled: 0 };
       byFac[code].leads++;
       if (Number(l.score) >= QUALIFIED_SCORE_MIN) byFac[code].qualified++;
-      if (l.outcome === 'enrolled' || l.outcome === 'inscrit') byFac[code].enrolled++;
+      if (isEnrolled(l.outcome)) byFac[code].enrolled++;
     });
     return Object.entries(byFac).map(([code, d]) => {
       // Sum maxCapacity and enrollmentTarget across programs in this entity

@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { COLORS, FACULTY_LABELS, FACULTY_COLORS } from '../config/theme';
 import { QUALIFIED_SCORE_MIN } from '../config/defaults';
+import { isEnrolled } from '../config/outcomeMapping';
 import { SectionTitle, DataTable, KPICard } from '../components/ui';
 import { fmt } from '../utils/formatters';
 
@@ -18,7 +19,7 @@ export default function ViewEntites({ leads, adSpend, experiments, dateRange }) 
       if (!byFac[code]) byFac[code] = { leads: 0, qualified: 0, enrolled: 0, scores: [], programmes: new Set() };
       byFac[code].leads++;
       if (Number(l.score) >= QUALIFIED_SCORE_MIN) byFac[code].qualified++;
-      if (l.outcome === 'enrolled' || l.outcome === 'inscrit') byFac[code].enrolled++;
+      if (isEnrolled(l.outcome)) byFac[code].enrolled++;
       byFac[code].scores.push(Number(l.score) || 0);
       if (l.programme_label) byFac[code].programmes.add(l.programme_label);
     });
@@ -40,7 +41,7 @@ export default function ViewEntites({ leads, adSpend, experiments, dateRange }) 
       if (!byProg[prog]) byProg[prog] = { entity, leads: 0, qualified: 0, enrolled: 0, scores: [], campus: new Set() };
       byProg[prog].leads++;
       if (Number(l.score) >= QUALIFIED_SCORE_MIN) byProg[prog].qualified++;
-      if (l.outcome === 'enrolled' || l.outcome === 'inscrit') byProg[prog].enrolled++;
+      if (isEnrolled(l.outcome)) byProg[prog].enrolled++;
       byProg[prog].scores.push(Number(l.score) || 0);
       if (l.campus_label) byProg[prog].campus.add(l.campus_label);
     });
@@ -146,7 +147,7 @@ export default function ViewEntites({ leads, adSpend, experiments, dateRange }) 
           if (!byCampus[c]) byCampus[c] = { leads: 0, qualified: 0, enrolled: 0 };
           byCampus[c].leads++;
           if (Number(l.score) >= QUALIFIED_SCORE_MIN) byCampus[c].qualified++;
-          if (l.outcome === 'enrolled' || l.outcome === 'inscrit') byCampus[c].enrolled++;
+          if (isEnrolled(l.outcome)) byCampus[c].enrolled++;
         });
 
         const progExps = activeExperiments.filter(e =>
