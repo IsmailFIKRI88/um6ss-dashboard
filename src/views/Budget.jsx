@@ -135,7 +135,7 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
         <KPICard label="Spend Total" value={fmt.mad(totalSpend)} sub={`${pacing.pctElapsed}% du temps écoulé`} color={colors.dark} tooltip="Dépense publicitaire totale" />
         <KPICard label="Projection Spend" value={fmt.mad(pacing.projectedTotalSpend)} sub={`${pacing.remainingDays}j restants`} color={accentColor} tooltip="Au rythme actuel, spend projeté fin campagne" />
         {hasOutcomes ? (
-          <KPICard label="Coût / Inscrit" value={fmt.mad(coutParInscrit)} sub={`${enrolled} inscrits`} color={coutParInscrit && coutParInscrit > 5000 ? colors.bad : colors.good} tooltip="Spend total ÷ inscrits confirmés" />
+          <KPICard label="Coût / Inscrit" value={fmt.mad(coutParInscrit)} sub={`${fmt.number(enrolled)} inscrits`} color={coutParInscrit && coutParInscrit > 5000 ? colors.bad : colors.good} tooltip="Spend total ÷ inscrits confirmés" />
         ) : (
           <KPICard label="CPL Global" value={totalLeads > 0 ? fmt.mad(Math.round(totalSpend / totalLeads)) : '—'} sub={`${fmt.number(totalLeads)} leads`} color={accentColor} tooltip="Spend total ÷ leads" />
         )}
@@ -165,12 +165,12 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
             <div style={{ ...cardStyle, flex: '1 1 180px', padding: '16px 18px', borderLeft: `4px solid ${financials.fullCAC && financials.fullCAC > 5000 ? colors.bad : colors.good}` }}>
               <div style={{ fontSize: 10, color: colors.medium, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>CAC</div>
               <div style={{ fontSize: 26, fontWeight: 700, color: financials.fullCAC && financials.fullCAC > 5000 ? colors.bad : colors.good, marginTop: 4, fontFamily: mode.font }}>{financials.fullCAC ? fmt.mad(financials.fullCAC) : '—'}</div>
-              <div style={{ fontSize: 10, color: colors.medium, marginTop: 2 }}>Coût total ÷ {enrolled} inscrits</div>
+              <div style={{ fontSize: 10, color: colors.medium, marginTop: 2 }}>Coût total ÷ {fmt.number(enrolled)} inscrits</div>
             </div>
             <div style={{ ...cardStyle, flex: '1 1 180px', padding: '16px 18px', borderLeft: `4px solid ${accentColor}` }}>
               <div style={{ fontSize: 10, color: colors.medium, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Revenue Année 1</div>
               <div style={{ fontSize: 26, fontWeight: 700, color: accentColor, marginTop: 4, fontFamily: mode.font }}>{fmt.mad(pnl.year1Rev)}</div>
-              <div style={{ fontSize: 10, color: colors.medium, marginTop: 2 }}>{enrolled} × (inscription + frais A1)</div>
+              <div style={{ fontSize: 10, color: colors.medium, marginTop: 2 }}>{fmt.number(enrolled)} × (inscription + frais A1)</div>
             </div>
             <div style={{ ...cardStyle, flex: '1 1 180px', padding: '16px 18px', borderLeft: `4px solid ${colors.bad}` }}>
               <div style={{ fontSize: 10, color: colors.medium, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Coûts campagne</div>
@@ -222,11 +222,11 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
             <div style={{ ...cardStyle, flex: '1 1 220px', padding: '16px 20px', borderTop: `3px solid ${enrolled >= financials.breakEvenInscrits ? colors.good : COLORS.warning}` }}>
               <div style={{ fontSize: 11, color: colors.medium, fontWeight: 600, textTransform: 'uppercase' }}>Seuil de Rentabilité</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: enrolled >= financials.breakEvenInscrits ? colors.good : COLORS.warning, marginTop: 4 }}>
-                {financials.breakEvenInscrits} inscrits
+                {fmt.number(financials.breakEvenInscrits)} inscrits
               </div>
               <div style={{ fontSize: 11, color: colors.medium }}>
                 {enrolled >= financials.breakEvenInscrits
-                  ? `✅ Atteint (${enrolled} inscrits) — campagne rentable`
+                  ? `✅ Atteint (${fmt.number(enrolled)} inscrits) — campagne rentable`
                   : `⚠️ Encore ${financials.breakEvenInscrits - enrolled} inscrits nécessaires`
                 }
               </div>
@@ -242,7 +242,7 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
                 {fmt.mad(marketSizing.headroom * wParams.weightedLTV)}
               </div>
               <div style={{ fontSize: 11, color: colors.medium }}>
-                ~{marketSizing.headroom} places non captées × {fmt.mad(wParams.weightedLTV)} LTV
+                ~{fmt.number(marketSizing.headroom)} places non captées × {fmt.mad(wParams.weightedLTV)} LTV
               </div>
             </div>
           )}
@@ -273,7 +273,7 @@ export default function ViewBudget({ leads, adSpend, outcomes, dateRange, financ
                     </div>
                     <div>
                       <span style={{ color: colors.medium }}>Inscrits : </span>
-                      <strong>{s.totalEnrolled}</strong>
+                      <strong>{fmt.number(s.totalEnrolled)}</strong>
                       {s.enrolledDelta !== 0 && (
                         <span style={{ color: s.enrolledDelta > 0 ? colors.good : colors.bad, fontSize: 11 }}>
                           {' '}({s.enrolledDelta > 0 ? '+' : ''}{s.enrolledDelta})

@@ -246,7 +246,7 @@ export default function ViewQualiteLeads({ leads, adSpend, abandons, outcomes, d
           color={contactDelay && contactDelay > 48 ? colors.bad : colors.good}
           tooltip="Temps moyen entre la candidature et le premier contact par l'équipe admissions" />
         <KPICard small label="Taux Conversion" value={totalLeads > 0 ? fmt.pct(enrolled / totalLeads * 100) : '—'}
-          sub={`${enrolled} inscrits`} color={enrolled > 0 ? colors.good : colors.medium}
+          sub={`${fmt.number(enrolled)} inscrits`} color={enrolled > 0 ? colors.good : colors.medium}
           tooltip="Pourcentage de candidatures converties en inscriptions confirmées (nécessite données DSI)" />
         <KPICard small label="Candidatures" value={fmt.number(totalLeads)}
           tooltip="Nombre total de formulaires de candidature reçus sur la période" />

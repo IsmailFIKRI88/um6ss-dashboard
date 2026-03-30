@@ -171,10 +171,10 @@ export default function ViewAdmissions({ leads, outcomes, financialSettings, dat
             </div>
 
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16 }}>
-              <KPICard small label="Candidatures" value={prog.total} color={progColor} />
-              <KPICard small label="Qualifiés" value={prog.qualified} color={colors.good} />
-              <KPICard small label="Contactés" value={prog.contacted} color={accentColor} />
-              <KPICard small label="Inscrits" value={prog.enrolled} color={COLORS.primary} />
+              <KPICard small label="Candidatures" value={fmt.number(prog.total)} color={progColor} />
+              <KPICard small label="Qualifiés" value={fmt.number(prog.qualified)} color={colors.good} />
+              <KPICard small label="Contactés" value={fmt.number(prog.contacted)} color={accentColor} />
+              <KPICard small label="Inscrits" value={fmt.number(prog.enrolled)} color={COLORS.primary} />
               {prog.capacity > 0 && (
                 <KPICard small label="Remplissage" value={`${prog.fillRate}%`}
                   sub={`${prog.enrolled} / ${prog.capacity}`}

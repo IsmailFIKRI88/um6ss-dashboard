@@ -60,7 +60,7 @@ export default function ViewStrategie({ leads, visits, adSpend, outcomes, experi
     if (enrolled === 0 && totalLeads > 100) a.push({ level: 1, text: 'Aucun inscrit enregistré — importer les outcomes DSI' });
     // Coût par inscrit élevé
     if (coutParInscrit && coutParInscrit > 5000) a.push({ level: 1, text: `Coût/inscrit élevé : ${fmt.mad(coutParInscrit)}` });
-    if (a.length === 0) a.push({ level: 0, text: `${fmt.number(totalLeads)} leads · ${enrolled} inscrits · Campagne en cours` });
+    if (a.length === 0) a.push({ level: 0, text: `${fmt.number(totalLeads)} leads · ${fmt.number(enrolled)} inscrits · Campagne en cours` });
     return a;
   }, [totalLeads, enrolled, trend, coutParInscrit]);
 
@@ -120,7 +120,7 @@ export default function ViewStrategie({ leads, visits, adSpend, outcomes, experi
       {/* KPIs stratégiques */}
       {financials ? (
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
-          <KPICard label="Inscrits" value={enrolled} sub={`sur ${fmt.number(totalLeads)} candidatures`} trend={trend} color={colors.good} tooltip="Nombre d'étudiants inscrits confirmés (données DSI)" />
+          <KPICard label="Inscrits" value={fmt.number(enrolled)} sub={`sur ${fmt.number(totalLeads)} candidatures`} trend={trend} color={colors.good} tooltip="Nombre d'étudiants inscrits confirmés (données DSI)" />
           <KPICard label="Coût / Inscrit" value={coutParInscrit ? fmt.mad(coutParInscrit) : '—'} tooltip="Budget publicitaire total divisé par le nombre d'inscrits" color={coutParInscrit && coutParInscrit > 5000 ? colors.bad : accentColor} />
           <KPICard label="Budget Consommé" value={fmt.mad(totalSpend)} tooltip="Total des dépenses publicitaires (Meta + Google + LinkedIn + TikTok)" color={colors.dark} />
           <KPICard label="ROAS" value={financials.roas ? `${financials.roas}x` : '—'} tooltip="Retour sur investissement pub : chaque MAD investi rapporte X MAD en frais de scolarité" color={accentColor} />
@@ -262,7 +262,7 @@ export default function ViewStrategie({ leads, visits, adSpend, outcomes, experi
                   {marketSizing.penetrationRange.low}% — {marketSizing.penetrationRange.high}%
                 </div>
                 <div style={{ fontSize: 11, color: colors.medium, marginTop: 4 }}>
-                  {enrolled} inscrits sur un marché capturable estimé à ~{marketSizing.som.base.toLocaleString('fr-FR')}
+                  {fmt.number(enrolled)} inscrits sur un marché capturable estimé à ~{marketSizing.som.base.toLocaleString('fr-FR')}
                 </div>
               </div>
 
@@ -272,7 +272,7 @@ export default function ViewStrategie({ leads, visits, adSpend, outcomes, experi
                   Marge de croissance
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 700, color: colors.dark, marginTop: 4 }}>
-                  ~{marketSizing.headroom.toLocaleString('fr-FR')} étudiants
+                  ~{fmt.number(marketSizing.headroom)} étudiants
                 </div>
                 <div style={{ fontSize: 11, color: colors.medium }}>
                   places captables avant saturation du marché adressable
